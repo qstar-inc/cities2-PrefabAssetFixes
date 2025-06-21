@@ -1,0 +1,31 @@
+﻿<Publish>
+	<ModId Value="113708" />
+	<DisplayName Value="Prefab Asset Fixes" />
+	<ShortDescription Value="Temporary solution for fixing simple fixes with assets, whether vanilla or custom" />
+	<LongDescription>
+This mod makes simple fixes that prevents some assets from functioning or just to make it look good.
+
+## Current Fixes:
+### Vanilla
+* Prison: Change the vehicle count to 20 so that all the service parkings are used.
+* Prison Van: Changed the vehicle size to Large, which allows the vans to be parked/spawned from all prison facilites (vanilla or custom).
+
+Assets placed before the changes made from this mod will not have the changes applied as it requires replopping.
+
+If you have more suggestion of fixes to be added, be sure to find me and inform me.
+	</LongDescription>
+	<Thumbnail Value="Properties/Thumbnail.png" />
+	<Screenshot Value="Properties/Screenshot01.png" />
+	<Tag Value="Code Mod" />
+	<ForumLink Value="" />
+	<ModVersion Value="1.0.0" />
+	<GameVersion Value="1.3.3*" />
+	<Dependency Id="" />
+	<RequiredDLC Value="" />
+	<ChangeLog>
+- Initial Release
+	</ChangeLog>
+	<ExternalLink Type="discord" Url="https://discord.gg/9KQUhr7fws" />
+	<ExternalLink Type="github" Url="https://github.com/qstar-inc/cities2-PrefabAssetFixes" />
+	<ExternalLink Type="buymeacoffee" Url="https://buymeacoffee.com/starq" />
+</Publish>
