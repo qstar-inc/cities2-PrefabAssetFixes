@@ -32,6 +32,19 @@ namespace PrefabAssetFixes
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.PrisonVan)),
                     $"Change the vanilla Prison Van's size class from Medium to Large so it can spawn from the prisons."
                 },
+                {
+                    m_Setting.GetOptionLabelLocaleID(nameof(Setting.Storage)),
+                    "Storage Section & Recycling Center"
+                },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.Storage)),
+                    $"Fix Storage Section not being shown for service buildings. And fix any Recycling buildings not being able to sell their products."
+                },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.Hospital)), "Hospital" },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.Hospital)),
+                    $"Change the vanilla Hospitals' service vehicle parking count from 10 to 30."
+                },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModState)), "Mod State" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModState)), "" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.NameText)), "Mod Name" },

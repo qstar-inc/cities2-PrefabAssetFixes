@@ -18,7 +18,7 @@ namespace PrefabAssetFixes
             World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<AssetFixSystem>();
 
         public const string OptionsTab = "Options";
-        public const string VanillaTab = "Vanilla";
+        public const string VanillaGroup = "Vanilla";
 
         public const string AboutTab = "About";
         public const string InfoGroup = "Info";
@@ -29,9 +29,10 @@ namespace PrefabAssetFixes
             SetDefaults();
         }
 
+        [Exclude]
         private bool _prisonVan;
 
-        [SettingsUISection(OptionsTab, VanillaTab)]
+        [SettingsUISection(OptionsTab, VanillaGroup)]
         public bool PrisonVan
         {
             get => _prisonVan;
@@ -42,9 +43,10 @@ namespace PrefabAssetFixes
             }
         }
 
+        [Exclude]
         private bool _prison;
 
-        [SettingsUISection(OptionsTab, VanillaTab)]
+        [SettingsUISection(OptionsTab, VanillaGroup)]
         public bool Prison
         {
             get => _prison;
@@ -52,6 +54,34 @@ namespace PrefabAssetFixes
             {
                 _prison = value;
                 assetFixSystem.FixPrison01(value);
+            }
+        }
+
+        [Exclude]
+        private bool _storage;
+
+        [SettingsUISection(OptionsTab, VanillaGroup)]
+        public bool Storage
+        {
+            get => _storage;
+            set
+            {
+                _storage = value;
+                assetFixSystem.FixStoarageMissing(value);
+            }
+        }
+
+        [Exclude]
+        private bool _hospital;
+
+        [SettingsUISection(OptionsTab, VanillaGroup)]
+        public bool Hospital
+        {
+            get => _hospital;
+            set
+            {
+                _hospital = value;
+                assetFixSystem.FixHostipal01(value);
             }
         }
 
@@ -94,6 +124,8 @@ namespace PrefabAssetFixes
         {
             Prison = true;
             PrisonVan = true;
+            Storage = true;
+            Hospital = true;
         }
     }
 }
