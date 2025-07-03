@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using Colossal.IO.AssetDatabase;
 using Colossal.Serialization.Entities;
 using Game;
+using Game.Common;
 using Game.Companies;
 using Game.Economy;
 using Game.Prefabs;
-using Game.UI.InGame;
 using Unity.Collections;
 using Unity.Entities;
 
@@ -22,12 +21,15 @@ namespace PrefabAssetFixes.Systems
         private bool firstPass = true;
         private readonly List<Entity> addedStorageLimit = new();
         private readonly List<Entity> addedCargoTransport = new();
-        private readonly List<Entity> addedTransportStop = new();
+        private readonly Dictionary<string, float> polePositions = new();
 
         private bool isPrisonSet = false;
         private bool isPrisonVanSet = false;
         private bool isStorageSet = false;
         private bool isHospitalSet = false;
+        private bool isPolesSet = false;
+
+        //private bool isHarborSet = false;
 
         protected override void OnCreate()
         {
@@ -45,15 +47,19 @@ namespace PrefabAssetFixes.Systems
         protected override void OnGameLoadingComplete(Purpose purpose, GameMode mode)
         {
             firstPass = false;
+            //#if DEBUG
+            //#else
             if (mode == GameMode.Editor)
             {
                 FixPrisonBus01(false);
                 FixPrison01(false);
-                FixStoarageMissing(false);
+                FixStorageMissing(false, false);
+                FixHostipal01(false);
+                FixHoveringPoles(false);
             }
-
             if (mode != GameMode.Game)
                 return;
+            //#endif
             StartFixes();
             SetState();
         }
@@ -65,19 +71,23 @@ namespace PrefabAssetFixes.Systems
                 FixPrisonBus01();
             if (settings.Prison)
                 FixPrison01();
-            if (settings.Storage)
-                FixStoarageMissing();
+            if (settings.Storage || settings.Recycling)
+                FixStorageMissing(settings.Storage, settings.Recycling);
             if (settings.Hospital)
                 FixHostipal01();
+            if (settings.HoveringPoles)
+                FixHoveringPoles();
+            //FixHarbourExtBase();
         }
 
         protected override void OnUpdate() { }
 
         public void SetState()
         {
-            if (changeCount == 4)
+            if (changeCount == 6)
             {
                 Mod.State = "All changes set";
+                Mod.log.Info(changeCount);
             }
             else if (changeCount == 0)
             {
@@ -198,11 +208,11 @@ namespace PrefabAssetFixes.Systems
             }
         }
 
-        public void FixStoarageMissing(bool active = true)
+        public void FixStorageMissing(bool storageActive = true, bool recyclingActive = true)
         {
-            if (!active && !isStorageSet)
+            if (!storageActive && !recyclingActive && !isStorageSet)
                 return;
-            if (!active && !firstPass)
+            if (!(storageActive || recyclingActive) && !firstPass)
             {
                 foreach (Entity entity in addedStorageLimit)
                 {
@@ -225,12 +235,12 @@ namespace PrefabAssetFixes.Systems
                 changeCount--;
                 isStorageSet = false;
             }
-            else if (active && !firstPass)
+            else if ((storageActive || recyclingActive) && !firstPass)
             {
                 EntityQuery storageBuildingsQuery = SystemAPI
                     .QueryBuilder()
                     .WithAny<ResourceProductionData, StorageLimitData>()
-                    .WithNone<CompanyBrandElement, OutsideConnectionData>()
+                    .WithNone<CompanyBrandElement, OutsideConnectionData, ServiceUpgradeData>()
                     .Build();
                 var storageBuildings = storageBuildingsQuery.ToEntityArray(Allocator.Temp);
                 foreach (var entity in storageBuildings)
@@ -244,27 +254,24 @@ namespace PrefabAssetFixes.Systems
                     {
                         string name = $"{prefabSystem.GetPrefabName(entity)}";
                         if (
-                            //    prefabBase.TryGet(out CargoTransportStation cts)
-                            //    && !prefabBase.TryGet(out StorageLimit _)
-                            //)
-                            //{
-                            //    Mod.log.Info($"{name} has cts but no stl");
-                            //}
-                            //else if (
-                            !prefabBase.TryGet(out CargoTransportStation _)
-                            && prefabBase.TryGet(out StorageLimit _)
+                            storageActive
+                            && !prefabBase.Has<CargoTransportStation>()
+                            && prefabBase.Has<StorageLimit>()
                         )
                         {
                             // add ctl by product
-                            prefabBase.AddComponent<CargoTransportStation>();
+                            CargoTransportStation cts =
+                                prefabBase.AddComponent<CargoTransportStation>();
+                            cts.transports = 1;
                             if (!addedCargoTransport.Contains(entity))
                                 addedCargoTransport.Add(entity);
                             prefabSystem.UpdatePrefab(prefabBase);
                             //Mod.log.Info($"{name} has stl but no ctl, added ctl");
                         }
                         else if (
-                            !prefabBase.TryGet(out CargoTransportStation _)
-                            && !prefabBase.TryGet(out StorageLimit _)
+                            recyclingActive
+                            && !prefabBase.Has<CargoTransportStation>()
+                            && !prefabBase.Has<StorageLimit>()
                         )
                         {
                             int storageValue = 0;
@@ -276,12 +283,15 @@ namespace PrefabAssetFixes.Systems
                                 {
                                     isRecycling = true;
                                     storageValue += grbg.m_GarbageCapacity;
-                                    var tpStop = prefabBase.AddComponent<TransportStop>();
-                                    tpStop.m_AccessConnectionType = RouteConnectionType.None;
-                                    tpStop.m_RouteConnectionType = RouteConnectionType.Cargo;
-                                    tpStop.m_AccessRoadType = Game.Net.RoadTypes.Car;
-                                    tpStop.m_CargoTransport = true;
-                                    tpStop.m_PassengerTransport = false;
+                                    if (!prefabBase.Has<TransportStop>())
+                                    {
+                                        var tpStop = prefabBase.AddComponent<TransportStop>();
+                                        tpStop.m_AccessConnectionType = RouteConnectionType.None;
+                                        tpStop.m_RouteConnectionType = RouteConnectionType.Cargo;
+                                        tpStop.m_AccessRoadType = Game.Net.RoadTypes.Car;
+                                        tpStop.m_CargoTransport = true;
+                                        tpStop.m_PassengerTransport = false;
+                                    }
                                     res.Add(ResourceInEditor.Money);
                                 }
                                 for (int rrr = 0; rrr < rp.m_Resources.Length; rrr++)
@@ -319,5 +329,183 @@ namespace PrefabAssetFixes.Systems
                 isStorageSet = true;
             }
         }
+
+        public void FixHoveringPoles(bool active = true)
+        {
+            if (!active && !isPolesSet)
+                return;
+
+            List<string> prefabNames = new()
+            {
+                "CN_OfficeHighA_L1_6x6",
+                "CN_OfficeHighA_L2_6x6",
+                "USSW_CommercialLow01_L1_6x6",
+                "USSW_CommercialLow01_L2_6x6",
+                "USSW_CommercialLow01_L3_6x6",
+                "USSW_CommercialLow01_L4_6x6",
+                "USSW_CommercialLow01_L1_4x4",
+                "USSW_CommercialLow01_L2_4x4",
+                "USSW_CommercialLow01_L3_4x4",
+                "USSW_CommercialLow01_L4_4x4",
+                "USSW_CommercialLow01_L5_4x4",
+                "USSW_CommercialLow02_L1_3x6",
+                "USSW_CommercialLow02_L2_3x6",
+                "USSW_CommercialLow02_L3_3x6",
+                "USSW_CommercialLow02_L4_3x6",
+                "USSW_CommercialLow02_L5_3x6",
+                "USSW_CommercialLow03_L1_3x6",
+                "USSW_CommercialLow03_L2_3x6",
+                "USSW_CommercialLow03_L3_3x6",
+                "USSW_CommercialLow03_L4_3x6",
+                "USSW_CommercialLow03_L5_3x6",
+                "USSW_CommercialLow04_L1_3x4",
+                "USSW_CommercialLow04_L2_3x4",
+                "USSW_CommercialLow04_L3_3x4",
+                "USSW_CommercialLow04_L4_3x4",
+                "USSW_CommercialLow100_L1_6x4",
+                "USSW_CommercialLow100_L2_6x4",
+                "USSW_CommercialLow100_L3_6x4",
+                "USSW_CommercialLow100_L4_6x4",
+                "USSW_CommercialLow100_L5_6x4",
+            };
+
+            bool anyChanged = false;
+
+            foreach (string prefabName in prefabNames)
+            {
+                if (FixPolesInRP(prefabName, active))
+                    anyChanged = true;
+            }
+
+            if (anyChanged)
+            {
+                changeCount += active ? 1 : -1;
+                isPolesSet = active;
+                SetState();
+            }
+        }
+
+        public bool FixPolesInRP(string prefabName, bool active)
+        {
+            if (
+                prefabSystem.TryGetPrefab(
+                    new PrefabID("BuildingPrefab", prefabName),
+                    out PrefabBase prefabBase
+                ) && prefabBase.TryGet(out ObjectSubObjects objects)
+            )
+            {
+                bool modified = false;
+                int i = 0;
+                foreach (var obj in objects.m_SubObjects)
+                {
+                    if (prefabName.StartsWith("CN"))
+                    {
+                        string name = obj.m_Object.name;
+                        if (name == "FlagPoleCommercial02")
+                        {
+                            if (!active && Math.Round(obj.m_Position.y) == 124f)
+                            {
+                                obj.m_Position.y = 135f;
+                                modified = true;
+                                //Mod.log.Info($"Reverted {prefabName} poles");
+                            }
+                            else if (active && Math.Round(obj.m_Position.y) == 135f)
+                            {
+                                obj.m_Position.y = 124f;
+                                modified = true;
+                                //Mod.log.Info($"Fixed {prefabName} poles");
+                            }
+                        }
+                    }
+                    else if (prefabName.StartsWith("USSW"))
+                    {
+                        string name = obj.m_Object.name;
+                        if (
+                            name == "Screen02"
+                            || name == "Screen01"
+                            || name == "BillboardWallMedium01"
+                        )
+                        {
+                            if (
+                                !active
+                                && (
+                                    (name == "BillboardWallMedium01" && obj.m_Position.y == 1.803f)
+                                    || ((name.StartsWith("Screen0") && obj.m_Position.y == 0.003f))
+                                )
+                            )
+                            {
+                                if (
+                                    polePositions.TryGetValue(prefabName + name + i, out float posY)
+                                )
+                                {
+                                    obj.m_Position.y = posY;
+                                }
+                                modified = true;
+                                //Mod.log.Info($"Reverted {prefabName} {name}");
+                            }
+                            else if (active && Math.Round(obj.m_Position.y) > 5f)
+                            {
+                                if (!polePositions.ContainsKey(prefabName + name + i))
+                                    polePositions.Add(prefabName + name + i, obj.m_Position.y);
+                                if (name == "BillboardWallMedium01")
+                                {
+                                    obj.m_Position.y = 1.803f;
+                                }
+                                else
+                                {
+                                    obj.m_Position.y = 0.003f;
+                                }
+                                modified = true;
+                                //Mod.log.Info($"Fixed {prefabName} {name}");
+                            }
+                        }
+                    }
+                    i++;
+                }
+
+                if (modified)
+                    prefabSystem.UpdatePrefab(prefabBase);
+
+                return modified;
+            }
+            return false;
+        }
+
+        //public void FixHarbourExtBase(bool active = true)
+        //{
+        //    if (!active && !isHarborSet)
+        //        return;
+        //    if (
+        //        prefabSystem.TryGetPrefab(
+        //            new PrefabID("RenderPrefab", "Harbor01 Mesh"),
+        //            out PrefabBase harbor_ext1_mesh
+        //        )
+        //    )
+        //    {
+        //        if (!active && !firstPass && harbor_ext1_mesh.Has<BaseProperties>())
+        //        {
+        //            harbor_ext1_mesh.Remove<BaseProperties>();
+        //            changeCount--;
+        //            isHarborSet = false;
+        //            Mod.log.Info("Reverted Harbor Mesh");
+        //        }
+        //        else if (active && !harbor_ext1_mesh.Has<BaseProperties>())
+        //        {
+        //            prefabSystem.TryGetPrefab(
+        //                new PrefabID("RenderPrefab", "Default_Base Mesh"),
+        //                out PrefabBase defaultRP
+        //            );
+
+        //            BaseProperties bp = harbor_ext1_mesh.AddComponent<BaseProperties>();
+        //            bp.m_UseMinBounds = true;
+        //            bp.m_BaseType = (RenderPrefab)defaultRP;
+        //            changeCount++;
+        //            isHarborSet = true;
+        //            Mod.log.Info("Fixed Harbor Mesh");
+        //        }
+        //        prefabSystem.UpdatePrefab(harbor_ext1_mesh);
+        //        SetState();
+        //    }
+        //}
     }
 }

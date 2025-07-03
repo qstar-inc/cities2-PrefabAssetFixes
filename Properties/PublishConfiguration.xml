@@ -6,29 +6,33 @@
 This mod makes simple fixes that prevents some assets from functioning or just to make it look good.
 
 ## Current Fixes:
+### Global
+* Prison Van Spawn: Change the vanilla Prison Van's size class from Medium to Large so it can spawn from the prisons. (Requires replopping)
+* Storage Section: Fix Storage Section not being shown for service buildings that require resources. (Requires save reloading, disabled by default)
+* Recycling System: Fix any Recycling buildings not being able to sell their products. (Requires save reloading)
 ### Vanilla
-* Prison: Change the vehicle count to 20 so that all the service parkings are used.
-* Prison Van: Changed the vehicle size to Large, which allows the vans to be parked/spawned from all prison facilites (vanilla or custom).
-* Storage and Recycling Center: Fix Storage Section not being shown for service buildings. And fix any Recycling buildings not being able to sell their products (vanilla or custom).
-* Hospital: Change the service vehicle parking count from 10 to 30.
-
-Assets placed before the changes made from this mod will not have the changes applied as it requires replopping.
+* Prison's Van Count: Change the vanilla Prison's Prison Van capacity from 10 to 20 to fill up all the service vehicle parkings. (Requires replopping)
+* Hospital Service Parking: Change the vanilla Hospitals' service vehicle parking count from 10 to 30. (Instant change)
+### Region Packs
+* Hovering Poles &amp; Signs: Fix hovering poles and signs present in China and US South West Region Packs. (Instant change)
 
 If you have more suggestion of fixes to be added, be sure to find me and inform me.
 	</LongDescription>
 	<Thumbnail Value="Properties/Thumbnail.png" />
-	<Screenshot Value="Properties/Screenshot01.png" />
+	<!--Screenshot Value="Properties/Screenshot01.png" /-->
 	<Screenshot Value="Properties/Screenshot02.png" />
 	<Screenshot Value="Properties/Screenshot03.png" />
 	<Screenshot Value="Properties/Screenshot04.png" />
+	<Screenshot Value="Properties/Screenshot05.png" />
+	<Screenshot Value="Properties/Screenshot06.png" />
 	<Tag Value="Code Mod" />
 	<ForumLink Value="" />
-	<ModVersion Value="1.0.1" />
+	<ModVersion Value="1.0.4" />
 	<GameVersion Value="1.3.3*" />
-	<Dependency Id="" />
+	 <Dependency Id="" />
 	<RequiredDLC Value="" />
 	<ChangeLog>
-- Add 'Storage and Recycling Center' and 'Hospital'
+- Add 'Hovering Poles &amp; Signs'
 	</ChangeLog>
 	<ExternalLink Type="discord" Url="https://discord.gg/9KQUhr7fws" />
 	<ExternalLink Type="github" Url="https://github.com/qstar-inc/cities2-PrefabAssetFixes" />

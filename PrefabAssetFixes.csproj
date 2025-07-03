@@ -5,7 +5,7 @@
 
 		<AssemblyName>PrefabAssetFixes</AssemblyName>
 		<AssemblyTitle>Prefab Asset Fixes</AssemblyTitle>
-		<Version>1.0.1</Version>
+		<Version>1.0.4</Version>
 		<Authors>StarQ</Authors>
 	
 		<!--The file where mod information which is required for publishing mod on PDX mods are stored-->

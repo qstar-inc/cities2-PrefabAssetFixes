@@ -3,7 +3,6 @@ using Colossal.IO.AssetDatabase;
 using Colossal.Json;
 using Game.Modding;
 using Game.Settings;
-using Game.UI;
 using PrefabAssetFixes.Systems;
 using Unity.Entities;
 using UnityEngine.Device;
@@ -11,6 +10,8 @@ using UnityEngine.Device;
 namespace PrefabAssetFixes
 {
     [FileLocation(nameof(PrefabAssetFixes))]
+    [SettingsUIGroupOrder(FunctionalGroup, VisualGroup)]
+    [SettingsUIShowGroupName(FunctionalGroup, VisualGroup)]
     public class Setting : ModSetting
     {
         [Exclude]
@@ -18,7 +19,8 @@ namespace PrefabAssetFixes
             World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<AssetFixSystem>();
 
         public const string OptionsTab = "Options";
-        public const string VanillaGroup = "Vanilla";
+        public const string FunctionalGroup = "Functional Fixes";
+        public const string VisualGroup = "Visual Fixes";
 
         public const string AboutTab = "About";
         public const string InfoGroup = "Info";
@@ -32,7 +34,7 @@ namespace PrefabAssetFixes
         [Exclude]
         private bool _prisonVan;
 
-        [SettingsUISection(OptionsTab, VanillaGroup)]
+        [SettingsUISection(OptionsTab, FunctionalGroup)]
         public bool PrisonVan
         {
             get => _prisonVan;
@@ -46,7 +48,7 @@ namespace PrefabAssetFixes
         [Exclude]
         private bool _prison;
 
-        [SettingsUISection(OptionsTab, VanillaGroup)]
+        [SettingsUISection(OptionsTab, VisualGroup)]
         public bool Prison
         {
             get => _prison;
@@ -60,21 +62,35 @@ namespace PrefabAssetFixes
         [Exclude]
         private bool _storage;
 
-        [SettingsUISection(OptionsTab, VanillaGroup)]
+        [SettingsUISection(OptionsTab, VisualGroup)]
         public bool Storage
         {
             get => _storage;
             set
             {
                 _storage = value;
-                assetFixSystem.FixStoarageMissing(value);
+                assetFixSystem.FixStorageMissing(value, Recycling);
+            }
+        }
+
+        [Exclude]
+        private bool _recycling;
+
+        [SettingsUISection(OptionsTab, FunctionalGroup)]
+        public bool Recycling
+        {
+            get => _recycling;
+            set
+            {
+                _recycling = value;
+                assetFixSystem.FixStorageMissing(Storage, value);
             }
         }
 
         [Exclude]
         private bool _hospital;
 
-        [SettingsUISection(OptionsTab, VanillaGroup)]
+        [SettingsUISection(OptionsTab, VisualGroup)]
         public bool Hospital
         {
             get => _hospital;
@@ -82,6 +98,20 @@ namespace PrefabAssetFixes
             {
                 _hospital = value;
                 assetFixSystem.FixHostipal01(value);
+            }
+        }
+
+        [Exclude]
+        private bool _hoveringPoles;
+
+        [SettingsUISection(OptionsTab, VisualGroup)]
+        public bool HoveringPoles
+        {
+            get => _hoveringPoles;
+            set
+            {
+                _hoveringPoles = value;
+                assetFixSystem.FixHoveringPoles(value);
             }
         }
 
@@ -124,8 +154,10 @@ namespace PrefabAssetFixes
         {
             Prison = true;
             PrisonVan = true;
-            Storage = true;
+            Storage = false;
             Hospital = true;
+            Recycling = true;
+            HoveringPoles = true;
         }
     }
 }
