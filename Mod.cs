@@ -34,7 +34,8 @@ namespace PrefabAssetFixes
 
             //if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
             //    log.Info($"Current mod asset at {asset.path}");
-            World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<AssetFixSystem>();
+            AssetFixSystem afs =
+                World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<AssetFixSystem>();
 
             m_Setting = new Setting(this);
             m_Setting.RegisterInOptionsUI();
@@ -45,6 +46,8 @@ namespace PrefabAssetFixes
                 m_Setting,
                 new Setting(this)
             );
+
+            afs.systemReady = true;
         }
 
         public void OnDispose()

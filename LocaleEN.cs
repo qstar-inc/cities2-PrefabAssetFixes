@@ -56,12 +56,36 @@ namespace PrefabAssetFixes
                     $"Change the vanilla Hospitals' service vehicle parking count from 10 to 30.\r\nInstant change."
                 },
                 {
+                    m_Setting.GetOptionLabelLocaleID(nameof(Setting.USSWHospital)),
+                    "USSW Hospital Ambulance Jam"
+                },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.USSWHospital)),
+                    $"Remove the USSW Hospitals' car spawn location, so ambulances don't drive through concrete wall.\r\nInstant change, but possible require asset update."
+                },
+                {
                     m_Setting.GetOptionLabelLocaleID(nameof(Setting.HoveringPoles)),
                     "Hovering Poles & Signs"
                 },
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.HoveringPoles)),
                     $"Fix hovering poles and signs present in China and US South West Region Packs.\r\nInstant change."
+                },
+                //{
+                //    m_Setting.GetOptionLabelLocaleID(nameof(Setting.SolarParking)),
+                //    "Disable Visual Extractors on Specialized Industry Areas"
+                //},
+                //{
+                //    m_Setting.GetOptionDescLocaleID(nameof(Setting.SolarParking)),
+                //    $"Enabling this will disable the various cosmetic buildings spawning in extractor lots.\r\nOnly applies to newly placed areas, or areas modified after this is enabled."
+                //},
+                {
+                    m_Setting.GetOptionLabelLocaleID(nameof(Setting.SolarParking)),
+                    "Solar Panel Parkings' Electricity Production"
+                },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.SolarParking)),
+                    $"Add solar power production to the parking lots with.\r\nInstant change."
                 },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModState)), "Mod State" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModState)), "" },

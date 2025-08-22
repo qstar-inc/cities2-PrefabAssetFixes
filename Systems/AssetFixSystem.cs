@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using Colossal.IO.AssetDatabase;
 using Colossal.Serialization.Entities;
 using Game;
-using Game.Common;
 using Game.Companies;
 using Game.Economy;
 using Game.Prefabs;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
+using UnityEngine;
 
 namespace PrefabAssetFixes.Systems
 {
@@ -19,15 +22,21 @@ namespace PrefabAssetFixes.Systems
         private EntityQuery carDataQuery;
         private int changeCount = 0;
         private bool firstPass = true;
+        public bool systemReady = false;
         private readonly List<Entity> addedStorageLimit = new();
         private readonly List<Entity> addedCargoTransport = new();
         private readonly Dictionary<string, float> polePositions = new();
+        private readonly Dictionary<Entity, ObjectPrefab[]> extractorsModified = new();
 
         private bool isPrisonSet = false;
         private bool isPrisonVanSet = false;
         private bool isStorageSet = false;
         private bool isHospitalSet = false;
         private bool isPolesSet = false;
+        private bool isUSSWHospitalSet = false;
+
+        //private bool isExtractorsDisabled = false;
+        private bool isSolarParkingSet = false;
 
         //private bool isHarborSet = false;
 
@@ -44,9 +53,10 @@ namespace PrefabAssetFixes.Systems
             prefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
         }
 
-        protected override void OnGameLoadingComplete(Purpose purpose, GameMode mode)
+        protected override void OnGamePreload(Purpose purpose, GameMode mode)
         {
-            firstPass = false;
+            if (!systemReady)
+                return;
             //#if DEBUG
             //#else
             if (mode == GameMode.Editor)
@@ -56,16 +66,22 @@ namespace PrefabAssetFixes.Systems
                 FixStorageMissing(false, false);
                 FixHostipal01(false);
                 FixHoveringPoles(false);
+                FixUSSWHospital(false);
+                //FixExtractorSpawning(false);
+                FixParkingLotSolar(false);
             }
             if (mode != GameMode.Game)
                 return;
             //#endif
             StartFixes();
             SetState();
+            firstPass = false;
         }
 
         private void StartFixes()
         {
+            if (!systemReady)
+                return;
             Setting settings = Mod.m_Setting;
             if (settings.PrisonVan)
                 FixPrisonBus01();
@@ -78,16 +94,25 @@ namespace PrefabAssetFixes.Systems
             if (settings.HoveringPoles)
                 FixHoveringPoles();
             //FixHarbourExtBase();
+            if (settings.USSWHospital)
+                FixUSSWHospital();
+            if (settings.SolarParking)
+                FixParkingLotSolar();
+            //if (1 == 1)
+            //{
+            //    //FixExtractorSpawning(false);
+            //    FixOfficeLowStorage();
+            //}
         }
 
         protected override void OnUpdate() { }
 
         public void SetState()
         {
-            if (changeCount == 6)
+            if (changeCount == 7)
             {
                 Mod.State = "All changes set";
-                Mod.log.Info(changeCount);
+                //Mod.log.Info(changeCount);
             }
             else if (changeCount == 0)
             {
@@ -101,62 +126,80 @@ namespace PrefabAssetFixes.Systems
 
         public void FixPrisonBus01(bool active = true)
         {
+            if (!systemReady)
+                return;
             if (!active && !isPrisonVanSet)
                 return;
             if (
                 prefabSystem.TryGetPrefab(
                     new PrefabID("CarPrefab", "PrisonVan01"),
-                    out PrefabBase prisonVan01
-                ) && prisonVan01.TryGet(out CarPrefab prisonVan)
+                    out PrefabBase prefabBase
+                ) && prefabBase.TryGet(out CarPrefab prisonVan)
             )
             {
+                bool changed = false;
                 if (!active && !firstPass)
                 {
                     prisonVan.m_SizeClass = Game.Vehicles.SizeClass.Medium;
                     changeCount--;
                     isPrisonVanSet = false;
+                    changed = true;
                 }
                 else if (active)
                 {
                     prisonVan.m_SizeClass = Game.Vehicles.SizeClass.Large;
                     changeCount++;
                     isPrisonVanSet = true;
+                    changed = true;
                 }
-                prefabSystem.UpdatePrefab(prisonVan01);
-                SetState();
+                if (changed)
+                {
+                    UpdatePrefab(prefabBase);
+                    SetState();
+                }
             }
         }
 
         public void FixPrison01(bool active = true)
         {
+            if (!systemReady)
+                return;
             if (!active && !isPrisonSet)
                 return;
             if (
                 prefabSystem.TryGetPrefab(
                     new PrefabID("BuildingPrefab", "Prison01"),
-                    out PrefabBase prison01
-                ) && prison01.TryGet(out Prison prison)
+                    out PrefabBase prefabBase
+                ) && prefabBase.TryGet(out Prison prison)
             )
             {
+                bool changed = false;
                 if (!active && !firstPass)
                 {
                     prison.m_PrisonVanCapacity = 10;
                     changeCount--;
                     isPrisonSet = false;
+                    changed = true;
                 }
                 else if (active)
                 {
                     prison.m_PrisonVanCapacity = 20;
                     changeCount++;
                     isPrisonSet = true;
+                    changed = true;
                 }
-                prefabSystem.UpdatePrefab(prison01);
-                SetState();
+                if (changed)
+                {
+                    UpdatePrefab(prefabBase);
+                    SetState();
+                }
             }
         }
 
         public void FixHostipal01(bool active = true)
         {
+            if (!systemReady)
+                return;
             if (!active && !isHospitalSet)
                 return;
             prefabSystem.TryGetPrefab(
@@ -171,10 +214,11 @@ namespace PrefabAssetFixes.Systems
             if (
                 prefabSystem.TryGetPrefab(
                     new PrefabID("BuildingPrefab", "Hospital01"),
-                    out PrefabBase hospital01
-                ) && hospital01.TryGet(out ObjectSubObjects hospital)
+                    out PrefabBase prefabBase
+                ) && prefabBase.TryGet(out ObjectSubObjects hospital)
             )
             {
+                bool changed = false;
                 if (!active && !firstPass)
                 {
                     for (int indexH = 0; indexH < hospital.m_SubObjects.Length; indexH++)
@@ -188,6 +232,7 @@ namespace PrefabAssetFixes.Systems
                     }
                     changeCount--;
                     isHospitalSet = false;
+                    changed = true;
                 }
                 else if (active)
                 {
@@ -202,14 +247,20 @@ namespace PrefabAssetFixes.Systems
                     }
                     changeCount++;
                     isHospitalSet = true;
+                    changed = true;
                 }
-                prefabSystem.UpdatePrefab(hospital01);
-                SetState();
+                if (changed)
+                {
+                    UpdatePrefab(prefabBase);
+                    SetState();
+                }
             }
         }
 
         public void FixStorageMissing(bool storageActive = true, bool recyclingActive = true)
         {
+            if (!systemReady)
+                return;
             if (!storageActive && !recyclingActive && !isStorageSet)
                 return;
             if (!(storageActive || recyclingActive) && !firstPass)
@@ -221,6 +272,7 @@ namespace PrefabAssetFixes.Systems
                         continue;
                     }
                     prefabBase.Remove<StorageLimit>();
+                    UpdatePrefab(prefabBase);
                     addedStorageLimit.Remove(entity);
                 }
                 foreach (Entity entity in addedCargoTransport)
@@ -230,6 +282,7 @@ namespace PrefabAssetFixes.Systems
                         continue;
                     }
                     prefabBase.Remove<CargoTransportStation>();
+                    UpdatePrefab(prefabBase);
                     addedCargoTransport.Remove(entity);
                 }
                 changeCount--;
@@ -252,7 +305,7 @@ namespace PrefabAssetFixes.Systems
 
                     if (prefabBase != null)
                     {
-                        string name = $"{prefabSystem.GetPrefabName(entity)}";
+                        //string name = $"{prefabSystem.GetPrefabName(entity)}";
                         if (
                             storageActive
                             && !prefabBase.Has<CargoTransportStation>()
@@ -263,9 +316,10 @@ namespace PrefabAssetFixes.Systems
                             CargoTransportStation cts =
                                 prefabBase.AddComponent<CargoTransportStation>();
                             cts.transports = 1;
+                            cts.m_TransportInterval = new Unity.Mathematics.int2(0, 400);
                             if (!addedCargoTransport.Contains(entity))
                                 addedCargoTransport.Add(entity);
-                            prefabSystem.UpdatePrefab(prefabBase);
+                            UpdatePrefab(prefabBase);
                             //Mod.log.Info($"{name} has stl but no ctl, added ctl");
                         }
                         else if (
@@ -320,18 +374,21 @@ namespace PrefabAssetFixes.Systems
                                 //Mod.log.Info(
                                 //    $"{name} has no stl (added {storageValue}) and no ctl (added)"
                                 //);
-                                prefabSystem.UpdatePrefab(prefabBase);
+                                UpdatePrefab(prefabBase);
                             }
                         }
                     }
                 }
                 changeCount++;
                 isStorageSet = true;
+                SetState();
             }
         }
 
         public void FixHoveringPoles(bool active = true)
         {
+            if (!systemReady)
+                return;
             if (!active && !isPolesSet)
                 return;
 
@@ -369,15 +426,15 @@ namespace PrefabAssetFixes.Systems
                 "USSW_CommercialLow100_L5_6x4",
             };
 
-            bool anyChanged = false;
+            bool changed = false;
 
             foreach (string prefabName in prefabNames)
             {
                 if (FixPolesInRP(prefabName, active))
-                    anyChanged = true;
+                    changed = true;
             }
 
-            if (anyChanged)
+            if (changed)
             {
                 changeCount += active ? 1 : -1;
                 isPolesSet = active;
@@ -464,7 +521,7 @@ namespace PrefabAssetFixes.Systems
                 }
 
                 if (modified)
-                    prefabSystem.UpdatePrefab(prefabBase);
+                    UpdatePrefab(prefabBase);
 
                 return modified;
             }
@@ -507,5 +564,211 @@ namespace PrefabAssetFixes.Systems
         //        SetState();
         //    }
         //}
+
+        public void FixUSSWHospital(bool active = true)
+        {
+            if (!systemReady)
+                return;
+            if (!active && !isUSSWHospitalSet)
+                return;
+            if (
+                prefabSystem.TryGetPrefab(
+                    new PrefabID("BuildingPrefab", "USSW_Hospital_16x14"),
+                    out PrefabBase prefabBase
+                )
+            )
+            {
+                bool changed = false;
+                if (!active && !firstPass && prefabBase.Has<ObjectSubObjects>())
+                {
+                    ObjectSubObjects objectSubObjects = prefabBase.GetComponent<ObjectSubObjects>();
+
+                    prefabSystem.TryGetPrefab(
+                        new PrefabID("MarkerPrefab", "Car Spawn Location"),
+                        out PrefabBase carSpawnMarker
+                    );
+
+                    var subObjects = objectSubObjects.m_SubObjects.ToList();
+                    subObjects.Add(
+                        new ObjectSubObjectInfo() { m_Object = (ObjectPrefab)carSpawnMarker }
+                    );
+
+                    objectSubObjects.m_SubObjects = subObjects.ToArray();
+                    changeCount--;
+                    isUSSWHospitalSet = false;
+                    changed = true;
+                }
+                else if (active && !prefabBase.Has<ObjectSubObjects>())
+                {
+                    ObjectSubObjects objectSubObjects = prefabBase.GetComponent<ObjectSubObjects>();
+                    var subObjects = objectSubObjects.m_SubObjects.ToList();
+                    subObjects.RemoveAll(oso => oso.m_Object.name == "Car Spawn Location");
+
+                    objectSubObjects.m_SubObjects = subObjects.ToArray();
+                    changeCount++;
+                    isUSSWHospitalSet = true;
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    UpdatePrefab(prefabBase);
+                    SetState();
+                }
+            }
+        }
+
+        //public void FixExtractorSpawning(bool active = true)
+        //{
+        //    if (!active && !isExtractorsDisabled)
+        //        return;
+        //    if (!active && !firstPass)
+        //    {
+        //        foreach (KeyValuePair<Entity, ObjectPrefab[]> kvp in extractorsModified)
+        //        {
+        //            Entity entity = kvp.Key;
+        //            ObjectPrefab[] objects = kvp.Value;
+
+        //            if (!prefabSystem.TryGetPrefab(entity, out PrefabBase prefabBase))
+        //            {
+        //                continue;
+        //            }
+        //            if (prefabBase.TryGet(out SpawnableObject sp))
+        //            {
+        //                sp.m_Placeholders = objects;
+        //            }
+        //            extractorsModified.Remove(entity);
+        //            prefabSystem.UpdatePrefab(prefabBase);
+        //        }
+        //        changeCount--;
+        //        isExtractorsDisabled = false;
+        //    }
+        //    else if (active && !firstPass)
+        //    {
+        //        EntityQuery spawnableQuery = SystemAPI
+        //            .QueryBuilder()
+        //            .WithAll<SpawnableObjectData>()
+        //            .WithAll<BuildingData>()
+        //            .WithAll<ExtractorFacilityData>()
+        //            .Build();
+        //        var spawnableBuildings = spawnableQuery.ToEntityArray(Allocator.Temp);
+        //        foreach (var entity in spawnableBuildings)
+        //        {
+        //            if (!prefabSystem.TryGetPrefab(entity, out PrefabBase prefabBase))
+        //            {
+        //                continue;
+        //            }
+
+        //            if (prefabBase != null)
+        //            {
+        //                if (prefabBase.TryGet(out SpawnableObject sp))
+        //                {
+        //                    if (!extractorsModified.ContainsKey(entity))
+        //                        extractorsModified.Add(entity, sp.m_Placeholders);
+
+        //                    Array.Resize(ref sp.m_Placeholders, 0);
+        //                    prefabSystem.UpdatePrefab(prefabBase);
+        //                }
+        //            }
+        //        }
+        //        changeCount++;
+        //        isExtractorsDisabled = true;
+        //    }
+        //}
+
+        public void FixParkingLotSolar(bool active = true)
+        {
+            if (!systemReady)
+                return;
+            if (!active && !isSolarParkingSet)
+                return;
+            if (
+                prefabSystem.TryGetPrefab(
+                    new PrefabID("BuildingPrefab", "ParkingLot12"),
+                    out PrefabBase prefabBase
+                )
+                && prefabSystem.TryGetPrefab(
+                    new PrefabID("BuildingPrefab", "ParkingLot13"),
+                    out PrefabBase prefabBase2
+                )
+            )
+            {
+                bool changed = false;
+                if (!active && !firstPass)
+                {
+                    if (prefabBase.Has<SolarPowered>() && prefabBase.Has<PowerPlant>())
+                    {
+                        prefabBase.Remove<SolarPowered>();
+                        prefabBase.Remove<PowerPlant>();
+                    }
+                    if (prefabBase2.Has<SolarPowered>() && prefabBase2.Has<PowerPlant>())
+                    {
+                        prefabBase2.Remove<SolarPowered>();
+                        prefabBase2.Remove<PowerPlant>();
+                    }
+                    changeCount--;
+                    isSolarParkingSet = false;
+                    changed = true;
+                }
+                else if (
+                    active
+                    && prefabSystem.TryGetPrefab(
+                        new PrefabID("PowerLinePrefab", "Low-voltage Marker"),
+                        out PrefabBase powerLine
+                    )
+                )
+                {
+                    float3 f3 = new(0, 0, 12);
+                    ObjectSubNetInfo marker = new()
+                    {
+                        m_NetPrefab = (NetPrefab)powerLine,
+                        m_BezierCurve = new Colossal.Mathematics.Bezier4x3(f3, f3, f3, f3),
+                        m_NodeIndex = new int2(999, 999),
+                        m_ParentMesh = new int2(-1, -1),
+                    };
+
+                    SolarPowered sp = prefabBase.AddOrGetComponent<SolarPowered>();
+                    sp.m_Production = 2500;
+
+                    PowerPlant pp = prefabBase.AddOrGetComponent<PowerPlant>();
+                    pp.m_ElectricityProduction = 0;
+
+                    ObjectSubNets osn = prefabBase.AddOrGetComponent<ObjectSubNets>();
+                    List<ObjectSubNetInfo> osni = osn.m_SubNets.ToList();
+                    osni.Add(marker);
+
+                    osn.m_SubNets = osni.ToArray();
+
+                    SolarPowered sp2 = prefabBase2.AddOrGetComponent<SolarPowered>();
+                    sp2.m_Production = 7500;
+
+                    PowerPlant pp2 = prefabBase2.AddOrGetComponent<PowerPlant>();
+                    pp2.m_ElectricityProduction = 0;
+
+                    ObjectSubNets osn2 = prefabBase2.AddOrGetComponent<ObjectSubNets>();
+                    List<ObjectSubNetInfo> osni2 = osn2.m_SubNets.ToList();
+                    osni2.Add(marker);
+
+                    osn2.m_SubNets = osni2.ToArray();
+
+                    changeCount++;
+                    isSolarParkingSet = true;
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    UpdatePrefab(prefabBase);
+                    UpdatePrefab(prefabBase2);
+                    SetState();
+                }
+            }
+        }
+
+        public void UpdatePrefab(PrefabBase prefabBase)
+        {
+            prefabSystem.UpdatePrefab(prefabBase);
+            Mod.log.Info($"{prefabBase.name} updated");
+        }
     }
 }

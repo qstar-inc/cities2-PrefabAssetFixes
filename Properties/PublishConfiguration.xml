@@ -1,8 +1,8 @@
 ﻿<Publish>
-	<ModId Value="113708" />
-	<DisplayName Value="Prefab Asset Fixes" />
-	<ShortDescription Value="Temporary solution for fixing simple fixes with assets, whether vanilla or custom" />
-	<LongDescription>
+  <ModId Value="113708" />
+  <DisplayName Value="Prefab Asset Fixes" />
+  <ShortDescription Value="Temporary solution for fixing simple fixes with assets, whether vanilla or custom" />
+  <LongDescription>
 This mod makes simple fixes that prevents some assets from functioning or just to make it look good.
 
 ## Current Fixes:
@@ -13,28 +13,31 @@ This mod makes simple fixes that prevents some assets from functioning or just t
 ### Vanilla
 * Prison's Van Count: Change the vanilla Prison's Prison Van capacity from 10 to 20 to fill up all the service vehicle parkings. (Requires replopping)
 * Hospital Service Parking: Change the vanilla Hospitals' service vehicle parking count from 10 to 30. (Instant change)
+* Solar Panel Parking Lot: Add small electricity production to the vanilla parking lot's with solar panel, small 250KW and medium 750KW. (Instant change)
 ### Region Packs
 * Hovering Poles &amp; Signs: Fix hovering poles and signs present in China and US South West Region Packs. (Instant change)
 
 If you have more suggestion of fixes to be added, be sure to find me and inform me.
 	</LongDescription>
-	<Thumbnail Value="Properties/Thumbnail.png" />
-	<!--Screenshot Value="Properties/Screenshot01.png" /-->
-	<Screenshot Value="Properties/Screenshot02.png" />
-	<Screenshot Value="Properties/Screenshot03.png" />
-	<Screenshot Value="Properties/Screenshot04.png" />
-	<Screenshot Value="Properties/Screenshot05.png" />
-	<Screenshot Value="Properties/Screenshot06.png" />
-	<Tag Value="Code Mod" />
-	<ForumLink Value="" />
-	<ModVersion Value="1.0.4" />
-	<GameVersion Value="1.3.3*" />
-	 <Dependency Id="" />
-	<RequiredDLC Value="" />
-	<ChangeLog>
-- Add 'Hovering Poles &amp; Signs'
+  <Thumbnail Value="Properties/Thumbnail.png" />
+  <!--Screenshot Value="Properties/Screenshot01.png" /-->
+  <Screenshot Value="Properties/Screenshot02.png" />
+  <Screenshot Value="Properties/Screenshot03.png" />
+  <Screenshot Value="Properties/Screenshot04.png" />
+  <Screenshot Value="Properties/Screenshot05.png" />
+  <Screenshot Value="Properties/Screenshot06.png" />
+  <Tag Value="Code Mod" />
+  <ForumLink Value="" />
+  <ModVersion Value="1.0.5" />
+  <GameVersion Value="1.3.3*" />
+  <Dependency Id="" />
+  <RequiredDLC Value="" />
+  <ChangeLog>
+- Add Solar Panel Parking Lot.
+- Add more logging.
+- Fix fix runs being duplicated.
 	</ChangeLog>
-	<ExternalLink Type="discord" Url="https://discord.gg/9KQUhr7fws" />
-	<ExternalLink Type="github" Url="https://github.com/qstar-inc/cities2-PrefabAssetFixes" />
-	<ExternalLink Type="buymeacoffee" Url="https://buymeacoffee.com/starq" />
+  <ExternalLink Type="discord" Url="https://discord.gg/9KQUhr7fws" />
+  <ExternalLink Type="github" Url="https://github.com/qstar-inc/cities2-PrefabAssetFixes" />
+  <ExternalLink Type="buymeacoffee" Url="https://buymeacoffee.com/starq" />
 </Publish>

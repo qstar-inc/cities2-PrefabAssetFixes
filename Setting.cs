@@ -102,6 +102,20 @@ namespace PrefabAssetFixes
         }
 
         [Exclude]
+        private bool _usswhospital;
+
+        [SettingsUISection(OptionsTab, VisualGroup)]
+        public bool USSWHospital
+        {
+            get => _usswhospital;
+            set
+            {
+                _usswhospital = value;
+                assetFixSystem.FixUSSWHospital(value);
+            }
+        }
+
+        [Exclude]
         private bool _hoveringPoles;
 
         [SettingsUISection(OptionsTab, VisualGroup)]
@@ -112,6 +126,20 @@ namespace PrefabAssetFixes
             {
                 _hoveringPoles = value;
                 assetFixSystem.FixHoveringPoles(value);
+            }
+        }
+
+        [Exclude]
+        private bool _solarParking;
+
+        [SettingsUISection(OptionsTab, FunctionalGroup)]
+        public bool SolarParking
+        {
+            get => _solarParking;
+            set
+            {
+                _solarParking = value;
+                assetFixSystem.FixParkingLotSolar(value);
             }
         }
 
@@ -154,10 +182,12 @@ namespace PrefabAssetFixes
         {
             Prison = true;
             PrisonVan = true;
-            Storage = false;
+            Storage = true;
             Hospital = true;
             Recycling = true;
             HoveringPoles = true;
+            USSWHospital = true;
+            SolarParking = true;
         }
     }
 }
