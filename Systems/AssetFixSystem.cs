@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Colossal.Entities;
 using Colossal.IO.AssetDatabase;
 using Colossal.Serialization.Entities;
 using Game;
@@ -73,9 +74,9 @@ namespace PrefabAssetFixes.Systems
             if (mode != GameMode.Game)
                 return;
             //#endif
+            firstPass = false;
             StartFixes();
             SetState();
-            firstPass = false;
         }
 
         private void StartFixes()
@@ -259,6 +260,7 @@ namespace PrefabAssetFixes.Systems
 
         public void FixStorageMissing(bool storageActive = true, bool recyclingActive = true)
         {
+            storageActive = false;
             if (!systemReady)
                 return;
             if (!storageActive && !recyclingActive && !isStorageSet)
@@ -277,7 +279,10 @@ namespace PrefabAssetFixes.Systems
                 }
                 foreach (Entity entity in addedCargoTransport)
                 {
-                    if (!prefabSystem.TryGetPrefab(entity, out PrefabBase prefabBase))
+                    EntityManager.TryGetComponent(entity, out PrefabData prefabData);
+                    prefabSystem.TryGetPrefab(prefabData, out PrefabBase prefabBase);
+
+                    if (prefabBase == null)
                     {
                         continue;
                     }
@@ -288,7 +293,7 @@ namespace PrefabAssetFixes.Systems
                 changeCount--;
                 isStorageSet = false;
             }
-            else if ((storageActive || recyclingActive) && !firstPass)
+            else if ((storageActive || recyclingActive))
             {
                 EntityQuery storageBuildingsQuery = SystemAPI
                     .QueryBuilder()
@@ -298,84 +303,85 @@ namespace PrefabAssetFixes.Systems
                 var storageBuildings = storageBuildingsQuery.ToEntityArray(Allocator.Temp);
                 foreach (var entity in storageBuildings)
                 {
-                    if (!prefabSystem.TryGetPrefab(entity, out PrefabBase prefabBase))
+                    EntityManager.TryGetComponent(entity, out PrefabData prefabData);
+                    prefabSystem.TryGetPrefab(prefabData, out PrefabBase prefabBase);
+
+                    if (prefabBase == null)
                     {
                         continue;
                     }
 
-                    if (prefabBase != null)
+                    //string name = $"{prefabSystem.GetPrefabName(entity)}";
+                    if (
+                        storageActive
+                        && !prefabBase.Has<CargoTransportStation>()
+                        && prefabBase.Has<StorageLimit>()
+                    )
                     {
-                        //string name = $"{prefabSystem.GetPrefabName(entity)}";
-                        if (
-                            storageActive
-                            && !prefabBase.Has<CargoTransportStation>()
-                            && prefabBase.Has<StorageLimit>()
-                        )
+                        // add ctl by product
+                        CargoTransportStation cts =
+                            prefabBase.AddComponent<CargoTransportStation>();
+                        cts.transports = 1;
+                        cts.m_TransportInterval = new int2(0, 0);
+
+                        if (!addedCargoTransport.Contains(entity))
+                            addedCargoTransport.Add(entity);
+                        UpdatePrefab(prefabBase);
+                        //Mod.log.Info($"{name} has stl but no ctl, added ctl");
+                    }
+                    else if (
+                        recyclingActive
+                        && !prefabBase.Has<CargoTransportStation>()
+                        && !prefabBase.Has<StorageLimit>()
+                    )
+                    {
+                        int storageValue = 0;
+                        List<ResourceInEditor> res = new();
+                        if (prefabBase.TryGet(out ResourceProducer rp))
                         {
-                            // add ctl by product
-                            CargoTransportStation cts =
-                                prefabBase.AddComponent<CargoTransportStation>();
-                            cts.transports = 1;
-                            cts.m_TransportInterval = new Unity.Mathematics.int2(0, 400);
+                            bool isRecycling = false;
+                            if (prefabBase.TryGet(out GarbageFacility grbg))
+                            {
+                                isRecycling = true;
+                                storageValue += grbg.m_GarbageCapacity;
+                                if (!prefabBase.Has<TransportStop>())
+                                {
+                                    var tpStop = prefabBase.AddComponent<TransportStop>();
+                                    tpStop.m_AccessConnectionType = RouteConnectionType.None;
+                                    tpStop.m_RouteConnectionType = RouteConnectionType.Cargo;
+                                    tpStop.m_AccessRoadType = Game.Net.RoadTypes.Car;
+                                    tpStop.m_CargoTransport = true;
+                                    tpStop.m_PassengerTransport = false;
+                                }
+                                res.Add(ResourceInEditor.Money);
+                            }
+                            for (int rrr = 0; rrr < rp.m_Resources.Length; rrr++)
+                            {
+                                var rpr = rp.m_Resources[rrr];
+                                storageValue += rpr.m_StorageCapacity;
+                                if (!isRecycling)
+                                {
+                                    res.Add(rpr.m_Resource);
+                                }
+                            }
+
+                            if (storageValue == 0)
+                            {
+                                storageValue = 1;
+                            }
+
+                            var stlN = prefabBase.AddComponent<StorageLimit>();
+                            stlN.storageLimit = storageValue;
+                            if (!addedStorageLimit.Contains(entity))
+                                addedStorageLimit.Add(entity);
+                            var ctsN = prefabBase.AddComponent<CargoTransportStation>();
+                            ctsN.m_TradedResources = res.ToArray();
                             if (!addedCargoTransport.Contains(entity))
                                 addedCargoTransport.Add(entity);
+                            //Mod.log.Info(
+                            //    $"{name} has no stl (added {storageValue}) and no ctl (added)"
+                            //);
                             UpdatePrefab(prefabBase);
-                            //Mod.log.Info($"{name} has stl but no ctl, added ctl");
-                        }
-                        else if (
-                            recyclingActive
-                            && !prefabBase.Has<CargoTransportStation>()
-                            && !prefabBase.Has<StorageLimit>()
-                        )
-                        {
-                            int storageValue = 0;
-                            List<ResourceInEditor> res = new();
-                            if (prefabBase.TryGet(out ResourceProducer rp))
-                            {
-                                bool isRecycling = false;
-                                if (prefabBase.TryGet(out GarbageFacility grbg))
-                                {
-                                    isRecycling = true;
-                                    storageValue += grbg.m_GarbageCapacity;
-                                    if (!prefabBase.Has<TransportStop>())
-                                    {
-                                        var tpStop = prefabBase.AddComponent<TransportStop>();
-                                        tpStop.m_AccessConnectionType = RouteConnectionType.None;
-                                        tpStop.m_RouteConnectionType = RouteConnectionType.Cargo;
-                                        tpStop.m_AccessRoadType = Game.Net.RoadTypes.Car;
-                                        tpStop.m_CargoTransport = true;
-                                        tpStop.m_PassengerTransport = false;
-                                    }
-                                    res.Add(ResourceInEditor.Money);
-                                }
-                                for (int rrr = 0; rrr < rp.m_Resources.Length; rrr++)
-                                {
-                                    var rpr = rp.m_Resources[rrr];
-                                    storageValue += rpr.m_StorageCapacity;
-                                    if (!isRecycling)
-                                    {
-                                        res.Add(rpr.m_Resource);
-                                    }
-                                }
-
-                                if (storageValue == 0)
-                                {
-                                    storageValue = 1;
-                                }
-
-                                var stlN = prefabBase.AddComponent<StorageLimit>();
-                                stlN.storageLimit = storageValue;
-                                if (!addedStorageLimit.Contains(entity))
-                                    addedStorageLimit.Add(entity);
-                                var ctsN = prefabBase.AddComponent<CargoTransportStation>();
-                                ctsN.m_TradedResources = res.ToArray();
-                                if (!addedCargoTransport.Contains(entity))
-                                    addedCargoTransport.Add(entity);
-                                //Mod.log.Info(
-                                //    $"{name} has no stl (added {storageValue}) and no ctl (added)"
-                                //);
-                                UpdatePrefab(prefabBase);
-                            }
                         }
                     }
                 }

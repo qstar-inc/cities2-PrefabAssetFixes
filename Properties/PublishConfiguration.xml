@@ -28,14 +28,12 @@ If you have more suggestion of fixes to be added, be sure to find me and inform 
   <Screenshot Value="Properties/Screenshot06.png" />
   <Tag Value="Code Mod" />
   <ForumLink Value="" />
-  <ModVersion Value="1.0.5" />
+  <ModVersion Value="1.0.6" />
   <GameVersion Value="1.3.3*" />
   <Dependency Id="" />
   <RequiredDLC Value="" />
   <ChangeLog>
-- Add Solar Panel Parking Lot.
-- Add more logging.
-- Fix fix runs being duplicated.
+- Hotfix: disabled Storage Section fix
 	</ChangeLog>
   <ExternalLink Type="discord" Url="https://discord.gg/9KQUhr7fws" />
   <ExternalLink Type="github" Url="https://github.com/qstar-inc/cities2-PrefabAssetFixes" />

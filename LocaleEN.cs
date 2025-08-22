@@ -40,7 +40,7 @@ namespace PrefabAssetFixes
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.Storage)), "Storage Section" },
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.Storage)),
-                    $"Fix Storage Section not being shown for service buildings that require resources.\r\nRequires reloading the save for this change to take effect."
+                    $"Fix Storage Section not being shown for service buildings that require resources.\r\nRequires reloading the save for this change to take effect.\r\nDisabled until further notice, since this has been known to cause truck spawn issue."
                 },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.Recycling)), "Recycling System" },
                 {

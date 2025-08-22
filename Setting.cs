@@ -59,9 +59,15 @@ namespace PrefabAssetFixes
             }
         }
 
+        public bool DisabledTrue()
+        {
+            return true;
+        }
+
         [Exclude]
         private bool _storage;
 
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(DisabledTrue))]
         [SettingsUISection(OptionsTab, VisualGroup)]
         public bool Storage
         {
@@ -182,7 +188,7 @@ namespace PrefabAssetFixes
         {
             Prison = true;
             PrisonVan = true;
-            Storage = true;
+            Storage = false;
             Hospital = true;
             Recycling = true;
             HoveringPoles = true;
