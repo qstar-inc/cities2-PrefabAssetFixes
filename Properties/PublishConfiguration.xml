@@ -2,13 +2,13 @@
   <ModId Value="113708" />
   <DisplayName Value="Prefab Asset Fixes" />
   <ShortDescription Value="Temporary solution for fixing simple fixes with assets, whether vanilla or custom" />
-  <LongDescription>
+  <LongDescription># Prefab Asset Fixes
 This mod makes simple fixes that prevents some assets from functioning or just to make it look good.
 
 ## Current Fixes:
 ### Global
 * Prison Van Spawn: Change the vanilla Prison Van's size class from Medium to Large so it can spawn from the prisons. (Requires replopping)
-* Storage Section: Fix Storage Section not being shown for service buildings that require resources. (Requires save reloading, disabled by default)
+* Storage Section: Fix Storage Section not being shown for service buildings that require resources. (Requires save reloading, temporarily disabled)
 * Recycling System: Fix any Recycling buildings not being able to sell their products. (Requires save reloading)
 ### Vanilla
 * Prison's Van Count: Change the vanilla Prison's Prison Van capacity from 10 to 20 to fill up all the service vehicle parkings. (Requires replopping)
@@ -28,13 +28,13 @@ If you have more suggestion of fixes to be added, be sure to find me and inform 
   <Screenshot Value="Properties/Screenshot06.png" />
   <Tag Value="Code Mod" />
   <ForumLink Value="" />
-  <ModVersion Value="1.0.6" />
+  <ModVersion Value="1.0.7" />
   <GameVersion Value="1.3.3*" />
   <Dependency Id="" />
   <RequiredDLC Value="" />
   <ChangeLog>
-- Hotfix: disabled Storage Section fix
-	</ChangeLog>
+- Simplified version check, to be compatible with MS Store version of the game.
+  </ChangeLog>
   <ExternalLink Type="discord" Url="https://discord.gg/9KQUhr7fws" />
   <ExternalLink Type="github" Url="https://github.com/qstar-inc/cities2-PrefabAssetFixes" />
   <ExternalLink Type="buymeacoffee" Url="https://buymeacoffee.com/starq" />

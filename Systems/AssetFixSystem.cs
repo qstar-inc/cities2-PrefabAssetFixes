@@ -23,6 +23,7 @@ namespace PrefabAssetFixes.Systems
         private EntityQuery carDataQuery;
         private int changeCount = 0;
         private bool firstPass = true;
+        public bool systemDisposed = false;
         public bool systemReady = false;
         private readonly List<Entity> addedStorageLimit = new();
         private readonly List<Entity> addedCargoTransport = new();
@@ -45,17 +46,24 @@ namespace PrefabAssetFixes.Systems
         {
             base.OnCreate();
             Enabled = false;
-            if (Game.Version.current != new Colossal.Version(1, 301797254804627269L, 76449216))
+            string currentVersion = Game.Version.current.shortVersion;
+            if (!Game.Version.current.shortVersion.StartsWith("1.3.3f1"))
             {
-                Mod.State = "Game version not compatible, only for 1.3.3f1.";
+                Mod.State =
+                    $"Game version {currentVersion} is not compatible for mod version {Mod.Version}, only for 1.3.3f1.";
+                systemDisposed = true;
                 return;
             }
 
-            prefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
+            prefabSystem =
+                World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<PrefabSystem>();
         }
 
         protected override void OnGamePreload(Purpose purpose, GameMode mode)
         {
+            if (!systemDisposed)
+                return;
+
             if (!systemReady)
                 return;
             //#if DEBUG

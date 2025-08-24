@@ -4,6 +4,7 @@ using Colossal.Logging;
 using Game;
 using Game.Modding;
 using Game.SceneFlow;
+using PrefabAssetFixes.Extensions;
 using PrefabAssetFixes.Systems;
 using Unity.Entities;
 
@@ -11,6 +12,7 @@ namespace PrefabAssetFixes
 {
     public class Mod : IMod
     {
+        public static string Id = nameof(PrefabAssetFixes);
         public static string Name = Assembly
             .GetExecutingAssembly()
             .GetCustomAttribute<AssemblyTitleAttribute>()
@@ -30,29 +32,25 @@ namespace PrefabAssetFixes
         public void OnLoad(UpdateSystem updateSystem)
         {
             State = "Ready";
-            //log.Info(nameof(OnLoad));
 
-            //if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
-            //    log.Info($"Current mod asset at {asset.path}");
+            foreach (var item in new LocaleHelper($"{Id}.Locale.json").GetAvailableLanguages())
+            {
+                GameManager.instance.localizationManager.AddSource(item.LocaleId, item);
+            }
+
             AssetFixSystem afs =
                 World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<AssetFixSystem>();
 
             m_Setting = new Setting(this);
             m_Setting.RegisterInOptionsUI();
-            GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(m_Setting));
 
-            AssetDatabase.global.LoadSettings(
-                nameof(PrefabAssetFixes),
-                m_Setting,
-                new Setting(this)
-            );
+            AssetDatabase.global.LoadSettings(Id, m_Setting, new Setting(this));
 
             afs.systemReady = true;
         }
 
         public void OnDispose()
         {
-            //log.Info(nameof(OnDispose));
             if (m_Setting != null)
             {
                 m_Setting.UnregisterInOptionsUI();

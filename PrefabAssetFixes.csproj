@@ -3,7 +3,7 @@
     <Configurations>Debug;Release</Configurations>
     <AssemblyName>PrefabAssetFixes</AssemblyName>
     <AssemblyTitle>Prefab Asset Fixes</AssemblyTitle>
-    <Version>1.0.6</Version>
+    <Version>1.0.7</Version>
     <Authors>StarQ</Authors>
     <!--The file where mod information which is required for publishing mod on PDX mods are stored-->
     <PublishConfigurationPath>Properties\PublishConfiguration.xml</PublishConfigurationPath>
@@ -69,5 +69,14 @@
   <ItemGroup>
     <None Include="$(ModPropsFile)" Link="Properties\Mod.props" />
     <None Include="$(ModTargetsFile)" Link="Properties\Mod.targets" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Locale.json" />
+    <EmbeddedResource Include="Locale\*.json" />
+    <None Remove="Locale.json" />
+    <None Remove="Locale\*.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Locale\" />
   </ItemGroup>
 </Project>
