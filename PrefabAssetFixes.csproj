@@ -3,7 +3,7 @@
     <Configurations>Debug;Release</Configurations>
     <AssemblyName>PrefabAssetFixes</AssemblyName>
     <AssemblyTitle>Prefab Asset Fixes</AssemblyTitle>
-    <Version>1.0.7</Version>
+    <Version>1.0.8</Version>
     <Authors>StarQ</Authors>
     <!--The file where mod information which is required for publishing mod on PDX mods are stored-->
     <PublishConfigurationPath>Properties\PublishConfiguration.xml</PublishConfigurationPath>

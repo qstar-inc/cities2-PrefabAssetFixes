@@ -28,14 +28,17 @@ If you have more suggestion of fixes to be added, be sure to find me and inform 
   <Screenshot Value="Properties/Screenshot06.png" />
   <Tag Value="Code Mod" />
   <ForumLink Value="" />
-  <ModVersion Value="1.0.7" />
+  <ModVersion Value="1.0.8" />
   <GameVersion Value="1.3.3*" />
   <Dependency Id="" />
   <RequiredDLC Value="" />
   <ChangeLog>
-- Simplified version check, to be compatible with MS Store version of the game.
+- Localization update: Spanish: 100%
+- Localization update: Polish: 100%
+- Localization update: Portuguese, Brazilian: 90%
   </ChangeLog>
-  <ExternalLink Type="discord" Url="https://discord.gg/9KQUhr7fws" />
-  <ExternalLink Type="github" Url="https://github.com/qstar-inc/cities2-PrefabAssetFixes" />
   <ExternalLink Type="buymeacoffee" Url="https://buymeacoffee.com/starq" />
+  <ExternalLink Type="github" Url="https://github.com/qstar-inc/cities2-PrefabAssetFixes" />
+  <ExternalLink Type="discord" Url="https://discord.gg/9KQUhr7fws" />
+  <ExternalLink Type="crowdin" Url="https://crowdin.com/project/cities2-mods" />
 </Publish>

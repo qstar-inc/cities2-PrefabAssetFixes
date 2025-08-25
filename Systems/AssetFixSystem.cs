@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Colossal.Entities;
-using Colossal.IO.AssetDatabase;
 using Colossal.Serialization.Entities;
 using Game;
 using Game.Companies;
@@ -11,20 +10,28 @@ using Game.Prefabs;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace PrefabAssetFixes.Systems
 {
+    public enum ModState
+    {
+        None,
+        Ready,
+        Incompatible,
+        SetNone,
+        SetSome,
+        SetAll,
+    }
+
     public partial class AssetFixSystem : GameSystemBase
     {
 #nullable disable
         public PrefabSystem prefabSystem;
 #nullable enable
-        private EntityQuery carDataQuery;
-        private int changeCount = 0;
-        private bool firstPass = true;
-        public bool systemDisposed = false;
-        public bool systemReady = false;
+        public static int changeCount = 0;
+        public static bool firstPass = true;
+        public static bool systemDisposed = false;
+        public static bool systemReady = false;
         private readonly List<Entity> addedStorageLimit = new();
         private readonly List<Entity> addedCargoTransport = new();
         private readonly Dictionary<string, float> polePositions = new();
@@ -45,29 +52,18 @@ namespace PrefabAssetFixes.Systems
         protected override void OnCreate()
         {
             base.OnCreate();
-            Enabled = false;
-            string currentVersion = Game.Version.current.shortVersion;
-            if (!Game.Version.current.shortVersion.StartsWith("1.3.3f1"))
-            {
-                Mod.State =
-                    $"Game version {currentVersion} is not compatible for mod version {Mod.Version}, only for 1.3.3f1.";
-                systemDisposed = true;
-                return;
-            }
-
             prefabSystem =
                 World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<PrefabSystem>();
         }
 
         protected override void OnGamePreload(Purpose purpose, GameMode mode)
         {
-            if (!systemDisposed)
+            if (systemDisposed || prefabSystem == null)
                 return;
 
             if (!systemReady)
                 return;
-            //#if DEBUG
-            //#else
+
             if (mode == GameMode.Editor)
             {
                 FixPrisonBus01(false);
@@ -82,15 +78,18 @@ namespace PrefabAssetFixes.Systems
             if (mode != GameMode.Game)
                 return;
             //#endif
+
             firstPass = false;
             StartFixes();
             SetState();
+            base.OnGameLoadingComplete(purpose, mode);
         }
 
         private void StartFixes()
         {
             if (!systemReady)
                 return;
+            Mod.log.Info("Starting Fixes");
             Setting settings = Mod.m_Setting;
             if (settings.PrisonVan)
                 FixPrisonBus01();
@@ -116,21 +115,18 @@ namespace PrefabAssetFixes.Systems
 
         protected override void OnUpdate() { }
 
-        public void SetState()
+        public static void SetState()
         {
-            if (changeCount == 7)
-            {
-                Mod.State = "All changes set";
-                //Mod.log.Info(changeCount);
-            }
-            else if (changeCount == 0)
-            {
-                Mod.State = "No changes set";
-            }
-            else
-            {
-                Mod.State = "Some changes set";
-            }
+            if (
+                Mod.modState == ModState.None
+                || Mod.modState == ModState.Incompatible
+                || firstPass
+                || systemDisposed
+                || !systemReady
+            )
+                return;
+            Mod.UpdateState();
+            Mod.log.Info($"{changeCount} changes set");
         }
 
         public void FixPrisonBus01(bool active = true)
