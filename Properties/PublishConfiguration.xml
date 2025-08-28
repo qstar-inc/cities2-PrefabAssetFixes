@@ -28,17 +28,23 @@ If you have more suggestion of fixes to be added, be sure to find me and inform 
   <Screenshot Value="Properties/Screenshot06.png" />
   <Tag Value="Code Mod" />
   <ForumLink Value="" />
-  <ModVersion Value="1.0.8" />
+  <ModVersion Value="1.0.9" />
   <GameVersion Value="1.3.3*" />
   <Dependency Id="" />
   <RequiredDLC Value="" />
   <ChangeLog>
-- Localization update: Spanish: 100%
-- Localization update: Polish: 100%
-- Localization update: Portuguese, Brazilian: 90%
+- In-game Log Viewer
+- Changes to Localization system
+- Fix error when opening Editor
+- Localization:
+-- German: 14%
+-- Spanish: 100%
+-- Polish: 100%
+-- Portuguese, Brazilian: 100%
+-- Chinese Simplified: 100%
   </ChangeLog>
   <ExternalLink Type="buymeacoffee" Url="https://buymeacoffee.com/starq" />
+  <ExternalLink Type="discord" Url="https://discord.gg/U2PSjUzUuF" />
   <ExternalLink Type="github" Url="https://github.com/qstar-inc/cities2-PrefabAssetFixes" />
-  <ExternalLink Type="discord" Url="https://discord.gg/9KQUhr7fws" />
   <ExternalLink Type="crowdin" Url="https://crowdin.com/project/cities2-mods" />
 </Publish>

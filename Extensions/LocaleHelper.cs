@@ -1,8 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using Colossal;
 using Colossal.Json;
+using Colossal.Localization;
+using Game.Routes;
 using Game.SceneFlow;
 
 namespace PrefabAssetFixes.Extensions
@@ -17,7 +21,7 @@ namespace PrefabAssetFixes.Extensions
 
             _locale = new Dictionary<string, Dictionary<string, string>>
             {
-                [string.Empty] = GetDictionary(dictionaryResourceName),
+                [string.Empty] = GetDictionaryEmbedded(dictionaryResourceName),
             };
 
             foreach (var name in assembly.GetManifestResourceNames())
@@ -34,25 +38,78 @@ namespace PrefabAssetFixes.Extensions
 
                 var key = Path.GetFileNameWithoutExtension(name);
 
-                _locale[key.Substring(key.LastIndexOf('.') + 1)] = GetDictionary(name);
+                _locale[key[(key.LastIndexOf('.') + 1)..]] = GetDictionaryEmbedded(name);
             }
 
-            Dictionary<string, string> GetDictionary(string resourceName)
+            //var dllDir = Path.GetDirectoryName(assembly.Location) ?? ".";
+            //var localeDir = Path.Combine(dllDir, "Locale");
+            //if (Directory.Exists(localeDir))
+            //{
+            //    foreach (
+            //        var file in Directory.GetFiles(
+            //            localeDir,
+            //            "*.json",
+            //            SearchOption.TopDirectoryOnly
+            //        )
+            //    )
+            //    {
+            //        var key = Path.GetFileNameWithoutExtension(file);
+            //        var userDict = GetDictionaryFile(file);
+
+            //        if (_locale.TryGetValue(key, out var baseDict))
+            //        {
+            //            foreach (var kv in userDict)
+            //            {
+            //                baseDict[kv.Key] = kv.Value;
+            //            }
+            //            _locale[key] = baseDict;
+            //        }
+            //        else
+            //        {
+            //            _locale[key] = userDict;
+            //        }
+            //    }
+            //}
+
+            Dictionary<string, string> GetDictionaryEmbedded(string resourceName)
             {
-                using var resourceStream = assembly.GetManifestResourceStream(resourceName);
-                if (resourceStream == null)
+                try
                 {
+                    using var resourceStream = assembly.GetManifestResourceStream(resourceName);
+                    if (resourceStream == null)
+                    {
+                        return new Dictionary<string, string>();
+                    }
+
+                    using var reader = new StreamReader(resourceStream, Encoding.UTF8);
+                    JSON.MakeInto<Dictionary<string, string>>(
+                        JSON.Load(reader.ReadToEnd()),
+                        out var dictionary
+                    );
+
+                    return dictionary;
+                }
+                catch (Exception ex)
+                {
+                    LogHelper.SendLog($"Failed to load embedded locale '{resourceName}': {ex}");
                     return new Dictionary<string, string>();
                 }
-
-                using var reader = new StreamReader(resourceStream, Encoding.UTF8);
-                JSON.MakeInto<Dictionary<string, string>>(
-                    JSON.Load(reader.ReadToEnd()),
-                    out var dictionary
-                );
-
-                return dictionary;
             }
+
+            //Dictionary<string, string> GetDictionaryFile(string filePath)
+            //{
+            //    try
+            //    {
+            //        var json = File.ReadAllText(filePath, Encoding.UTF8);
+            //        JSON.MakeInto<Dictionary<string, string>>(JSON.Load(json), out var dictionary);
+            //        return dictionary;
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        LogHelper.SendLog($"Failed to load locale file '{filePath}': {ex}");
+            //        return new Dictionary<string, string>();
+            //    }
+            //}
         }
 
         public static string Translate(string id, string fallback = null)
@@ -99,6 +156,82 @@ namespace PrefabAssetFixes.Extensions
             }
 
             public void Unload() { }
+        }
+
+        public static void OnActiveDictionaryChanged()
+        {
+            LocalizationManager lm = GameManager.instance.localizationManager;
+            Dictionary<string, string> toUpdate = new();
+
+            Dictionary<string, string> replacements = Mod.localeReplacement;
+
+            Regex regex = new($@"(\{{{Regex.Escape(Mod.Id)}\.[\w.]+\}}+)", RegexOptions.Compiled);
+
+            foreach (var entry in lm.activeDictionary.entries)
+            {
+                if (!entry.Key.Contains(Mod.Id))
+                {
+                    continue;
+                }
+                string newValue = Expand(entry.Value, lm, replacements, regex);
+                if (newValue != entry.Value)
+                {
+                    toUpdate[entry.Key] = newValue;
+                }
+            }
+
+            foreach (var item in toUpdate)
+            {
+                try
+                {
+                    lm.activeDictionary.Add(item.Key, item.Value);
+                }
+                catch (Exception) { }
+            }
+        }
+
+        static string Expand(
+            string input,
+            LocalizationManager lm,
+            Dictionary<string, string> replacements,
+            Regex regex
+        )
+        {
+            string result = input;
+            bool changed;
+
+            do
+            {
+                changed = false;
+                result = regex.Replace(
+                    result,
+                    match =>
+                    {
+                        var key = (match.Groups[1].Value).Replace("{", "").Replace("}", "");
+
+                        if (
+                            replacements.TryGetValue(
+                                key.Replace($"{Mod.Id}.Replacement.", ""),
+                                out var replacement
+                            )
+                        )
+                        {
+                            changed = true;
+                            return replacement;
+                        }
+
+                        if (lm.activeDictionary.TryGetValue(key, out var localized))
+                        {
+                            changed = true;
+                            return localized;
+                        }
+
+                        return match.Value;
+                    }
+                );
+            } while (changed && regex.IsMatch(result));
+
+            return result;
         }
     }
 }

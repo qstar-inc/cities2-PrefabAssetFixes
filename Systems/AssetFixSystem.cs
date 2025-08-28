@@ -7,6 +7,7 @@ using Game;
 using Game.Companies;
 using Game.Economy;
 using Game.Prefabs;
+using PrefabAssetFixes.Extensions;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -89,7 +90,7 @@ namespace PrefabAssetFixes.Systems
         {
             if (!systemReady)
                 return;
-            Mod.log.Info("Starting Fixes");
+            LogHelper.SendLog("Starting Fixes");
             Setting settings = Mod.m_Setting;
             if (settings.PrisonVan)
                 FixPrisonBus01();
@@ -126,7 +127,7 @@ namespace PrefabAssetFixes.Systems
             )
                 return;
             Mod.UpdateState();
-            Mod.log.Info($"{changeCount} changes set");
+            LogHelper.SendLog($"{changeCount} changes set");
         }
 
         public void FixPrisonBus01(bool active = true)
@@ -262,7 +263,9 @@ namespace PrefabAssetFixes.Systems
             }
         }
 
+#pragma warning disable IDE0060 // Remove unused parameter
         public void FixStorageMissing(bool storageActive = true, bool recyclingActive = true)
+#pragma warning restore IDE0060 // Remove unused parameter
         {
             storageActive = false;
             if (!systemReady)
@@ -271,6 +274,7 @@ namespace PrefabAssetFixes.Systems
                 return;
             if (!(storageActive || recyclingActive) && !firstPass)
             {
+                List<Entity> toRemoveFromAddedStorageLimit = new();
                 foreach (Entity entity in addedStorageLimit)
                 {
                     if (!prefabSystem.TryGetPrefab(entity, out PrefabBase prefabBase))
@@ -279,8 +283,9 @@ namespace PrefabAssetFixes.Systems
                     }
                     prefabBase.Remove<StorageLimit>();
                     UpdatePrefab(prefabBase);
-                    addedStorageLimit.Remove(entity);
+                    toRemoveFromAddedStorageLimit.Add(entity);
                 }
+                List<Entity> toRemoveFromAddedCargoTransport = new();
                 foreach (Entity entity in addedCargoTransport)
                 {
                     EntityManager.TryGetComponent(entity, out PrefabData prefabData);
@@ -292,10 +297,18 @@ namespace PrefabAssetFixes.Systems
                     }
                     prefabBase.Remove<CargoTransportStation>();
                     UpdatePrefab(prefabBase);
-                    addedCargoTransport.Remove(entity);
+                    toRemoveFromAddedCargoTransport.Add(entity);
                 }
                 changeCount--;
                 isStorageSet = false;
+                foreach (Entity entity in toRemoveFromAddedStorageLimit)
+                {
+                    addedStorageLimit.Remove(entity);
+                }
+                foreach (Entity entity in toRemoveFromAddedCargoTransport)
+                {
+                    addedCargoTransport.Remove(entity);
+                }
             }
             else if ((storageActive || recyclingActive))
             {
@@ -331,7 +344,7 @@ namespace PrefabAssetFixes.Systems
                         if (!addedCargoTransport.Contains(entity))
                             addedCargoTransport.Add(entity);
                         UpdatePrefab(prefabBase);
-                        //Mod.log.Info($"{name} has stl but no ctl, added ctl");
+                        //LogHelper.SendLog($"{name} has stl but no ctl, added ctl");
                     }
                     else if (
                         recyclingActive
@@ -382,7 +395,7 @@ namespace PrefabAssetFixes.Systems
                             ctsN.m_TradedResources = res.ToArray();
                             if (!addedCargoTransport.Contains(entity))
                                 addedCargoTransport.Add(entity);
-                            //Mod.log.Info(
+                            //LogHelper.SendLog(
                             //    $"{name} has no stl (added {storageValue}) and no ctl (added)"
                             //);
                             UpdatePrefab(prefabBase);
@@ -474,13 +487,13 @@ namespace PrefabAssetFixes.Systems
                             {
                                 obj.m_Position.y = 135f;
                                 modified = true;
-                                //Mod.log.Info($"Reverted {prefabName} poles");
+                                //LogHelper.SendLog($"Reverted {prefabName} poles");
                             }
                             else if (active && Math.Round(obj.m_Position.y) == 135f)
                             {
                                 obj.m_Position.y = 124f;
                                 modified = true;
-                                //Mod.log.Info($"Fixed {prefabName} poles");
+                                //LogHelper.SendLog($"Fixed {prefabName} poles");
                             }
                         }
                     }
@@ -508,7 +521,7 @@ namespace PrefabAssetFixes.Systems
                                     obj.m_Position.y = posY;
                                 }
                                 modified = true;
-                                //Mod.log.Info($"Reverted {prefabName} {name}");
+                                //LogHelper.SendLog($"Reverted {prefabName} {name}");
                             }
                             else if (active && Math.Round(obj.m_Position.y) > 5f)
                             {
@@ -523,7 +536,7 @@ namespace PrefabAssetFixes.Systems
                                     obj.m_Position.y = 0.003f;
                                 }
                                 modified = true;
-                                //Mod.log.Info($"Fixed {prefabName} {name}");
+                                //LogHelper.SendLog($"Fixed {prefabName} {name}");
                             }
                         }
                     }
@@ -554,7 +567,7 @@ namespace PrefabAssetFixes.Systems
         //            harbor_ext1_mesh.Remove<BaseProperties>();
         //            changeCount--;
         //            isHarborSet = false;
-        //            Mod.log.Info("Reverted Harbor Mesh");
+        //            LogHelper.SendLog("Reverted Harbor Mesh");
         //        }
         //        else if (active && !harbor_ext1_mesh.Has<BaseProperties>())
         //        {
@@ -568,7 +581,7 @@ namespace PrefabAssetFixes.Systems
         //            bp.m_BaseType = (RenderPrefab)defaultRP;
         //            changeCount++;
         //            isHarborSet = true;
-        //            Mod.log.Info("Fixed Harbor Mesh");
+        //            LogHelper.SendLog("Fixed Harbor Mesh");
         //        }
         //        prefabSystem.UpdatePrefab(harbor_ext1_mesh);
         //        SetState();
@@ -778,7 +791,7 @@ namespace PrefabAssetFixes.Systems
         public void UpdatePrefab(PrefabBase prefabBase)
         {
             prefabSystem.UpdatePrefab(prefabBase);
-            Mod.log.Info($"{prefabBase.name} updated");
+            LogHelper.SendLog($"{prefabBase.name} updated");
         }
     }
 }

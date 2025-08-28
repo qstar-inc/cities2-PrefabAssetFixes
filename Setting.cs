@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using Colossal.IO.AssetDatabase;
 using Colossal.Json;
+using Colossal.PSI.Environment;
 using Game.Modding;
 using Game.Settings;
+using PrefabAssetFixes.Extensions;
 using PrefabAssetFixes.Systems;
 using Unity.Entities;
 using UnityEngine.Device;
@@ -10,7 +14,7 @@ using UnityEngine.Device;
 namespace PrefabAssetFixes
 {
     [FileLocation(nameof(PrefabAssetFixes))]
-    [SettingsUIGroupOrder(FunctionalGroup, VisualGroup)]
+    [SettingsUIGroupOrder(FunctionalGroup, VisualGroup, LogTab)]
     [SettingsUIShowGroupName(FunctionalGroup, VisualGroup)]
     public class Setting : ModSetting
     {
@@ -18,12 +22,14 @@ namespace PrefabAssetFixes
         public AssetFixSystem assetFixSystem =
             World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<AssetFixSystem>();
 
-        public const string OptionsTab = "Options";
+        public const string OptionsTab = "OptionsTab";
         public const string FunctionalGroup = "Functional Fixes";
         public const string VisualGroup = "Visual Fixes";
 
-        public const string AboutTab = "About";
+        public const string AboutTab = "AboutTab";
         public const string InfoGroup = "Info";
+
+        public const string LogTab = "LogTab";
 
         public Setting(IMod mod)
             : base(mod)
@@ -179,8 +185,44 @@ namespace PrefabAssetFixes
                 }
                 catch (Exception e)
                 {
-                    Mod.log.Info(e);
+                    LogHelper.SendLog(e);
                 }
+            }
+        }
+
+        [SettingsUIButtonGroup("Social")]
+        [SettingsUIButton]
+        [SettingsUISection(AboutTab, InfoGroup)]
+        public bool Discord
+        {
+            set
+            {
+                try
+                {
+                    Application.OpenURL(
+                        $"https://discord.com/channels/1024242828114673724/1390407455522951228"
+                    );
+                }
+                catch (Exception e)
+                {
+                    LogHelper.SendLog($"{e}");
+                }
+            }
+        }
+
+        [SettingsUIMultilineText]
+        [SettingsUIDisplayName(typeof(LogHelper), nameof(LogHelper.LogText))]
+        [SettingsUISection(LogTab, "")]
+        public string LogText => string.Empty;
+
+        [SettingsUISection(LogTab, "")]
+        public bool OpenLog
+        {
+            set
+            {
+                Task.Run(() =>
+                    Process.Start($"{EnvPath.kUserDataPath}/Logs/{nameof(PrefabAssetFixes)}.log")
+                );
             }
         }
 
