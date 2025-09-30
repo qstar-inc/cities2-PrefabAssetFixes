@@ -6,8 +6,8 @@ using Colossal.Json;
 using Colossal.PSI.Environment;
 using Game.Modding;
 using Game.Settings;
-using PrefabAssetFixes.Extensions;
 using PrefabAssetFixes.Systems;
+using StarQ.Shared.Extensions;
 using Unity.Entities;
 using UnityEngine.Device;
 
@@ -116,6 +116,7 @@ namespace PrefabAssetFixes
         [Exclude]
         private bool _usswhospital;
 
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(Has_RP_USSW))]
         [SettingsUISection(OptionsTab, VisualGroup)]
         public bool USSWHospital
         {
@@ -130,6 +131,7 @@ namespace PrefabAssetFixes
         [Exclude]
         private bool _hoveringPoles;
 
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(Has_RP_CN_or_USSW))]
         [SettingsUISection(OptionsTab, VisualGroup)]
         public bool HoveringPoles
         {
@@ -152,6 +154,106 @@ namespace PrefabAssetFixes
             {
                 _solarParking = value;
                 assetFixSystem.FixParkingLotSolar(value);
+            }
+        }
+
+        [Exclude]
+        private bool _rs_clinic;
+
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(Has_DLC_MA))]
+        [SettingsUISection(OptionsTab, FunctionalGroup)]
+        public bool RSClinic
+        {
+            get => _rs_clinic;
+            set
+            {
+                _rs_clinic = value;
+                assetFixSystem.FixRSClinic(value);
+            }
+        }
+
+        [Exclude]
+        private bool _lhtBusStation02;
+
+        [SettingsUISection(OptionsTab, VisualGroup)]
+        public bool LHTBusStation02
+        {
+            get => _lhtBusStation02;
+            set
+            {
+                _lhtBusStation02 = value;
+                assetFixSystem.FixLHTBusStation02(value);
+            }
+        }
+
+        [Exclude]
+        private bool _lhtTaxiDepot01;
+
+        [SettingsUISection(OptionsTab, VisualGroup)]
+        public bool LHTTaxiDepot01
+        {
+            get => _lhtTaxiDepot01;
+            set
+            {
+                _lhtTaxiDepot01 = value;
+                assetFixSystem.FixLHTTaxiDepot01(value);
+            }
+        }
+
+        [Exclude]
+        private bool _lhtTramDepot01;
+
+        [SettingsUISection(OptionsTab, VisualGroup)]
+        public bool LHTTramDepot01
+        {
+            get => _lhtTramDepot01;
+            set
+            {
+                _lhtTramDepot01 = value;
+                assetFixSystem.FixLHTTramDepot01(value);
+            }
+        }
+
+        [Exclude]
+        private bool _lhtCargoHarbor01;
+
+        [SettingsUISection(OptionsTab, VisualGroup)]
+        public bool LHTCargoHarbor01
+        {
+            get => _lhtCargoHarbor01;
+            set
+            {
+                _lhtCargoHarbor01 = value;
+                assetFixSystem.FixLHTCargoHarbor01(value);
+            }
+        }
+
+        [Exclude]
+        private bool _rhtBusStation01;
+
+        [SettingsUISection(OptionsTab, VisualGroup)]
+        public bool RHTBusStation01
+        {
+            get => _rhtBusStation01;
+            set
+            {
+                _rhtBusStation01 = value;
+                assetFixSystem.FixRHTBusStation01(value);
+            }
+        }
+
+        [Exclude]
+        private bool _nl_LowHousehold;
+
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(Has_DLC_MA))]
+        [SettingsUISection(OptionsTab, FunctionalGroup)]
+        public bool NLLowHousehold
+        {
+            get => _nl_LowHousehold;
+            set
+            {
+                _nl_LowHousehold = value;
+                assetFixSystem.FixNLLowHousehold(value);
             }
         }
 
@@ -236,6 +338,36 @@ namespace PrefabAssetFixes
             HoveringPoles = true;
             USSWHospital = true;
             SolarParking = true;
+            RSClinic = true;
+            LHTBusStation02 = true;
+            LHTTaxiDepot01 = true;
+            LHTTramDepot01 = true;
+            LHTCargoHarbor01 = true;
+            RHTBusStation01 = true;
+            NLLowHousehold = true;
+        }
+
+        private bool Has_RP_CN()
+        {
+            return !assetFixSystem.IsActive(AssetFixSystem.PackType.RP_CN);
+        }
+
+        private bool Has_RP_USSW()
+        {
+            return !assetFixSystem.IsActive(AssetFixSystem.PackType.RP_USSW);
+        }
+
+        private bool Has_RP_CN_or_USSW()
+        {
+            return !(
+                assetFixSystem.IsActive(AssetFixSystem.PackType.RP_CN)
+                || assetFixSystem.IsActive(AssetFixSystem.PackType.RP_USSW)
+            );
+        }
+
+        private bool Has_DLC_MA()
+        {
+            return !assetFixSystem.IsActive(AssetFixSystem.PackType.DLC_MA);
         }
     }
 }

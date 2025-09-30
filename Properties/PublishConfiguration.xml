@@ -14,8 +14,17 @@ This mod makes simple fixes that prevents some assets from functioning or just t
 * Prison's Van Count: Change the vanilla Prison's Prison Van capacity from 10 to 20 to fill up all the service vehicle parkings. (Requires replopping)
 * Hospital Service Parking: Change the vanilla Hospitals' service vehicle parking count from 10 to 30. (Instant change)
 * Solar Panel Parking Lot: Add small electricity production to the vanilla parking lot's with solar panel, small 250KW and medium 750KW. (Instant change)
+* Small Bus Station for LHT: Reverse Small Bus Station networks for Left Hand Traffic. (Instant change)
+* Taxi Depot for LHT: Reverse Taxi Depot networks for Left Hand Traffic. (Instant change)
+* Tram Depot for LHT: Reverse Tram Depot networks for Left Hand Traffic. (Instant change)
+* Cargo Harbor for LHT: Reverse Cargo Harbor networks for Left Hand Traffic. (Instant change)
+* Bus Station for RHT: Reverse Bus Station networks for Right Hand Traffic. (Instant change)
+### DLCs
+* Modern Medical Clinic Storage: Change the Modern Medical Clinic Storage capacity from 0.1t to 1t.(Instant change)
 ### Region Packs
 * Hovering Poles &amp; Signs: Fix hovering poles and signs present in China and US South West Region Packs. (Instant change)
+* USSW Hospital Ambulance Jam: Remove the USSW Hospitals' car spawn location, so ambulances don't drive through concrete wall. (Instant change, but possible require asset update)
+* NL Low Density Household: Change household count for NL low density houses from 1 to 2. (Instant change)
 
 If you have more suggestion of fixes to be added, be sure to find me and inform me.
 	</LongDescription>
@@ -28,20 +37,12 @@ If you have more suggestion of fixes to be added, be sure to find me and inform 
   <Screenshot Value="Properties/Screenshot06.png" />
   <Tag Value="Code Mod" />
   <ForumLink Value="" />
-  <ModVersion Value="1.0.9" />
+  <ModVersion Value="1.1.1" />
   <GameVersion Value="1.3.3*" />
   <Dependency Id="" />
   <RequiredDLC Value="" />
   <ChangeLog>
-- In-game Log Viewer
-- Changes to Localization system
-- Fix error when opening Editor
-- Localization:
--- German: 14%
--- Spanish: 100%
--- Polish: 100%
--- Portuguese, Brazilian: 100%
--- Chinese Simplified: 100%
+- Netherlands Pack: Update low density houses to have 2 households instead of 1.
   </ChangeLog>
   <ExternalLink Type="buymeacoffee" Url="https://buymeacoffee.com/starq" />
   <ExternalLink Type="discord" Url="https://discord.gg/U2PSjUzUuF" />

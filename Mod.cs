@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Reflection;
 using Colossal.IO.AssetDatabase;
 using Colossal.Logging;
-using Colossal.PSI.Environment;
 using Game;
 using Game.Modding;
 using Game.SceneFlow;
-using Game.UI.Localization;
-using PrefabAssetFixes.Extensions;
 using PrefabAssetFixes.Systems;
+using StarQ.Shared.Extensions;
 using Unity.Entities;
 
 namespace PrefabAssetFixes
@@ -30,13 +26,14 @@ namespace PrefabAssetFixes
         public static ILog log = LogManager.GetLogger($"{Id}").SetShowsErrorsInUI(false);
 
         public static Setting m_Setting;
-        public static Dictionary<string, string> localeReplacement;
         public static string State = "";
         public static string supportedGameVersion = "1.3.3f1";
         public static ModState modState = ModState.None;
 
         public void OnLoad(UpdateSystem updateSystem)
         {
+            LogHelper.Init(Id, log);
+            LocaleHelper.Init(Id, GetReplacements);
             foreach (var item in new LocaleHelper($"{Id}.Locale.json").GetAvailableLanguages())
             {
                 GameManager.instance.localizationManager.AddSource(item.LocaleId, item);
@@ -50,13 +47,6 @@ namespace PrefabAssetFixes
             m_Setting.RegisterInOptionsUI();
 
             AssetDatabase.global.LoadSettings(Id, m_Setting, new Setting(this));
-
-            localeReplacement = new()
-            {
-                { "currentVersion", Game.Version.current.shortVersion },
-                { "modVersion", Version },
-                { "fixedVersion", supportedGameVersion },
-            };
 
             AssetFixSystem.systemReady = true;
             modState = ModState.Ready;
@@ -76,6 +66,10 @@ namespace PrefabAssetFixes
                 return;
             }
 
+            //updateSystem.UpdateAfter<
+            //    AchievementEnabler,
+            //    Game.Achievements.AchievementTriggerSystem
+            //>(SystemUpdatePhase.MainLoop);
             //updateSystem.UpdateAt<AssetFixSystem>(SystemUpdatePhase.Modification3);
         }
 
@@ -88,15 +82,27 @@ namespace PrefabAssetFixes
             }
         }
 
+        public static Dictionary<string, string> GetReplacements()
+        {
+            return new()
+            {
+                { "currentVersion", Game.Version.current.shortVersion },
+                { "modVersion", Version },
+                { "fixedVersion", supportedGameVersion },
+            };
+        }
+
         public static void UpdateState()
         {
             ModState ms = modState;
             int changeCount = AssetFixSystem.changeCount;
+            int vanillaCount = AssetFixSystem.totalCount;
+
             if (!AssetFixSystem.firstPass)
             {
                 if (changeCount == 0)
                     modState = ModState.SetNone;
-                else if (changeCount == 7)
+                else if (changeCount == vanillaCount)
                     modState = ModState.SetAll;
                 else
                     modState = ModState.SetSome;
