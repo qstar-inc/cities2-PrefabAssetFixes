@@ -27,7 +27,7 @@ namespace PrefabAssetFixes
 
         public static Setting m_Setting;
         public static string State = "";
-        public static string supportedGameVersion = "1.3.3f1";
+        public static string supportedGameVersion = "1.3.5f1";
         public static ModState modState = ModState.None;
 
         public void OnLoad(UpdateSystem updateSystem)
@@ -52,7 +52,7 @@ namespace PrefabAssetFixes
             modState = ModState.Ready;
             UpdateState();
 
-            if (!Game.Version.current.shortVersion.StartsWith("1.3.3f1"))
+            if (!Game.Version.current.shortVersion.StartsWith(supportedGameVersion))
             {
                 LogHelper.SendLog(
                     $"Disabling mod because {Game.Version.current.shortVersion} is not {supportedGameVersion}"
@@ -86,9 +86,9 @@ namespace PrefabAssetFixes
         {
             return new()
             {
-                { "currentVersion", Game.Version.current.shortVersion },
-                { "modVersion", Version },
-                { "fixedVersion", supportedGameVersion },
+                { "CurrentVersion", Game.Version.current.shortVersion },
+                { "ModVersion", Version },
+                { "FixedVersion", supportedGameVersion },
             };
         }
 
