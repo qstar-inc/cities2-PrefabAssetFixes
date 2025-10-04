@@ -322,11 +322,47 @@ namespace PrefabAssetFixes
         {
             set
             {
-                Task.Run(() =>
-                    Process.Start($"{EnvPath.kUserDataPath}/Logs/{nameof(PrefabAssetFixes)}.log")
-                );
+                string logPath = $"{EnvPath.kUserDataPath}/Logs/{nameof(PrefabAssetFixes)}.log";
+                string? logsDir = System.IO.Path.GetDirectoryName(logPath);
+
+                try
+                {
+                    if (System.IO.File.Exists(logPath))
+                    {
+                        var psi = new ProcessStartInfo(logPath)
+                        {
+                            UseShellExecute = true,  // open with default editor
+                            ErrorDialog = false,
+                            Verb = "open"
+                        };
+                        Process.Start(psi);
+                        return;
+                    }
+
+                    // No file yet — open the Logs folder instead
+                    if (!string.IsNullOrEmpty(logsDir) && System.IO.Directory.Exists(logsDir))
+                    {
+                        var psi2 = new ProcessStartInfo(logsDir)
+                        {
+                            UseShellExecute = true,
+                            ErrorDialog = false,
+                            Verb = "open"
+                        };
+                        Process.Start(psi2);
+                    }
+                    else
+                    {
+                        LogHelper.SendLog("[OpenLog] No log file yet, and Logs folder not found.", LogLevel.Info);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Single catch handles Win32Exception and anything else safely
+                    LogHelper.SendLog($"[OpenLog] Failed to open path: {ex.GetType().Name}: {ex.Message}", LogLevel.Warn);
+                }
             }
         }
+
 
         public override void SetDefaults()
         {
