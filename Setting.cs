@@ -317,6 +317,28 @@ namespace PrefabAssetFixes
         [SettingsUISection(LogTab, "")]
         public string LogText => string.Empty;
 
+        [Exclude]
+        [SettingsUIHidden]
+        public bool IsLogMissing
+        {
+            get
+            {
+                try
+                {
+                    return !System.IO.File.Exists(
+                        $"{EnvPath.kUserDataPath}/Logs/{nameof(PrefabAssetFixes)}.log"
+                    );
+                }
+                catch (Exception e)
+                {
+                    LogHelper.SendLog(e);
+                    return true;
+                }
+            }
+        }
+
+        [SettingsUIButton]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(IsLogMissing))]
         [SettingsUISection(LogTab, "")]
         public bool OpenLog
         {
