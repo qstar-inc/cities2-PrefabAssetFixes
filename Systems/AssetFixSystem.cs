@@ -4,13 +4,12 @@ using System.Linq;
 using Colossal.Entities;
 using Colossal.Serialization.Entities;
 using Game;
-using Game.Companies;
-using Game.Economy;
 using Game.Prefabs;
 using StarQ.Shared.Extensions;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using ServiceUpgrade = Game.Prefabs.ServiceUpgrade;
 
 namespace PrefabAssetFixes.Systems
 {
@@ -42,8 +41,9 @@ namespace PrefabAssetFixes.Systems
         private readonly Dictionary<Entity, ObjectPrefab[]> extractorsModified = new();
 
         private bool isPrisonSet = false;
-        private bool isPrisonVanSet = false;
-        private bool isStorageSet = false;
+
+        //private bool isPrisonVanSet = false;
+        //private bool isStorageSet = false;
         private bool isHospitalSet = false;
         private bool isPolesSet = false;
         private bool isUSSWHospitalSet = false;
@@ -55,6 +55,7 @@ namespace PrefabAssetFixes.Systems
         private bool isLHTCargoHarbor01Set = false;
         private bool isRHTBusStation01Set = false;
         private bool isNLLowHouseholdSet = false;
+        private bool isAdditionalTransformersSet = false;
 
         //private bool isExtractorsDisabled = false;
 
@@ -101,10 +102,13 @@ namespace PrefabAssetFixes.Systems
 
         private void CheckCount()
         {
-            totalCount = 10;
+            totalCount = 11;
             // prison + prison van + recycling + hospital + solar parking +
             // lht bus station 2 + lht taxi depot + lht tram depot +
-            // lht cargo harbor + rht bus station 1
+            // lht cargo harbor + rht bus station 1 + additional transformers
+
+            totalCount -= 2;
+            // prison van + recycling
             if (
                 prefabSystem.TryGetPrefab(
                     new PrefabID("BuildingPrefab", "CN_OfficeHighA_L1_6x6"),
@@ -157,9 +161,9 @@ namespace PrefabAssetFixes.Systems
 
             if (mode == GameMode.Editor)
             {
-                FixPrisonBus01(false);
+                //FixPrisonBus01(false);
                 FixPrison01(false);
-                FixStorageMissing(false, false);
+                //FixStorageMissing(false, false);
                 FixHostipal01(false);
                 FixHoveringPoles(false);
                 FixUSSWHospital(false);
@@ -177,10 +181,11 @@ namespace PrefabAssetFixes.Systems
                 return;
             //#endif
 
+            FixAdditionalTransformers();
             firstPass = false;
             StartFixes();
             SetState();
-            base.OnGameLoadingComplete(purpose, mode);
+            base.OnGamePreload(purpose, mode);
         }
 
         private void StartFixes()
@@ -189,12 +194,12 @@ namespace PrefabAssetFixes.Systems
                 return;
             LogHelper.SendLog("Starting Fixes");
             Setting settings = Mod.m_Setting;
-            if (settings.PrisonVan)
-                FixPrisonBus01();
+            //if (settings.PrisonVan)
+            //    FixPrisonBus01();
             if (settings.Prison)
                 FixPrison01();
-            if (settings.Storage || settings.Recycling)
-                FixStorageMissing(settings.Storage, settings.Recycling);
+            //if (settings.Storage || settings.Recycling)
+            //    FixStorageMissing(settings.Storage, settings.Recycling);
             if (settings.Hospital)
                 FixHostipal01();
             if (settings.HoveringPoles && (IsActive(PackType.RP_CN) || IsActive(PackType.RP_USSW)))
@@ -218,7 +223,8 @@ namespace PrefabAssetFixes.Systems
                 FixRHTBusStation01();
             if (settings.NLLowHousehold && IsActive(PackType.RP_NL))
                 FixNLLowHousehold();
-
+            //if (settings.AdditionalTransformers)
+            //    FixAdditionalTransformers();
             //if (1 == 1)
             //{
             //    //FixExtractorSpawning(false);
@@ -248,41 +254,41 @@ namespace PrefabAssetFixes.Systems
             LogHelper.SendLog($"{prefabBase.name} updated");
         }
 
-        public void FixPrisonBus01(bool active = true)
-        {
-            if (!systemReady)
-                return;
-            if (!active && !isPrisonVanSet)
-                return;
-            if (
-                prefabSystem.TryGetPrefab(
-                    new PrefabID("CarPrefab", "PrisonVan01"),
-                    out PrefabBase prefabBase
-                ) && prefabBase.TryGet(out CarPrefab prisonVan)
-            )
-            {
-                bool changed = false;
-                if (!active && !firstPass)
-                {
-                    prisonVan.m_SizeClass = Game.Vehicles.SizeClass.Medium;
-                    changeCount--;
-                    isPrisonVanSet = false;
-                    changed = true;
-                }
-                else if (active)
-                {
-                    prisonVan.m_SizeClass = Game.Vehicles.SizeClass.Large;
-                    changeCount++;
-                    isPrisonVanSet = true;
-                    changed = true;
-                }
-                if (changed)
-                {
-                    UpdatePrefab(prefabBase);
-                    SetState();
-                }
-            }
-        }
+        //public void FixPrisonBus01(bool active = true)
+        //{
+        //    if (!systemReady)
+        //        return;
+        //    if (!active && !isPrisonVanSet)
+        //        return;
+        //    if (
+        //        prefabSystem.TryGetPrefab(
+        //            new PrefabID("CarPrefab", "PrisonVan01"),
+        //            out PrefabBase prefabBase
+        //        ) && prefabBase.TryGet(out CarPrefab prisonVan)
+        //    )
+        //    {
+        //        bool changed = false;
+        //        if (!active && !firstPass)
+        //        {
+        //            prisonVan.m_SizeClass = Game.Vehicles.SizeClass.Medium;
+        //            changeCount--;
+        //            isPrisonVanSet = false;
+        //            changed = true;
+        //        }
+        //        else if (active)
+        //        {
+        //            prisonVan.m_SizeClass = Game.Vehicles.SizeClass.Large;
+        //            changeCount++;
+        //            isPrisonVanSet = true;
+        //            changed = true;
+        //        }
+        //        if (changed)
+        //        {
+        //            UpdatePrefab(prefabBase);
+        //            SetState();
+        //        }
+        //    }
+        //}
 
         public void FixPrison01(bool active = true)
         {
@@ -294,7 +300,7 @@ namespace PrefabAssetFixes.Systems
                 prefabSystem.TryGetPrefab(
                     new PrefabID("BuildingPrefab", "Prison01"),
                     out PrefabBase prefabBase
-                ) && prefabBase.TryGet(out Prison prison)
+                ) && prefabBase.TryGet(out Game.Prefabs.Prison prison)
             )
             {
                 bool changed = false;
@@ -381,150 +387,148 @@ namespace PrefabAssetFixes.Systems
             }
         }
 
-#pragma warning disable IDE0060 // Remove unused parameter
-        public void FixStorageMissing(bool storageActive = true, bool recyclingActive = true)
-#pragma warning restore IDE0060 // Remove unused parameter
-        {
-            storageActive = false;
-            if (!systemReady)
-                return;
-            if (!storageActive && !recyclingActive && !isStorageSet)
-                return;
-            if (!(storageActive || recyclingActive) && !firstPass)
-            {
-                List<Entity> toRemoveFromAddedStorageLimit = new();
-                foreach (Entity entity in addedStorageLimit)
-                {
-                    if (!prefabSystem.TryGetPrefab(entity, out PrefabBase prefabBase))
-                    {
-                        continue;
-                    }
-                    prefabBase.Remove<StorageLimit>();
-                    UpdatePrefab(prefabBase);
-                    toRemoveFromAddedStorageLimit.Add(entity);
-                }
-                List<Entity> toRemoveFromAddedCargoTransport = new();
-                foreach (Entity entity in addedCargoTransport)
-                {
-                    EntityManager.TryGetComponent(entity, out PrefabData prefabData);
-                    prefabSystem.TryGetPrefab(prefabData, out PrefabBase prefabBase);
+        //public void FixStorageMissing(bool storageActive = true, bool recyclingActive = true)
+        //{
+        //    storageActive = false;
+        //    if (!systemReady)
+        //        return;
+        //    if (!storageActive && !recyclingActive && !isStorageSet)
+        //        return;
+        //    if (!(storageActive || recyclingActive) && !firstPass)
+        //    {
+        //        List<Entity> toRemoveFromAddedStorageLimit = new();
+        //        foreach (Entity entity in addedStorageLimit)
+        //        {
+        //            if (!prefabSystem.TryGetPrefab(entity, out PrefabBase prefabBase))
+        //            {
+        //                continue;
+        //            }
+        //            prefabBase.Remove<StorageLimit>();
+        //            UpdatePrefab(prefabBase);
+        //            toRemoveFromAddedStorageLimit.Add(entity);
+        //        }
+        //        List<Entity> toRemoveFromAddedCargoTransport = new();
+        //        foreach (Entity entity in addedCargoTransport)
+        //        {
+        //            EntityManager.TryGetComponent(entity, out PrefabData prefabData);
+        //            prefabSystem.TryGetPrefab(prefabData, out PrefabBase prefabBase);
 
-                    if (prefabBase == null)
-                    {
-                        continue;
-                    }
-                    prefabBase.Remove<CargoTransportStation>();
-                    UpdatePrefab(prefabBase);
-                    toRemoveFromAddedCargoTransport.Add(entity);
-                }
-                changeCount--;
-                isStorageSet = false;
-                foreach (Entity entity in toRemoveFromAddedStorageLimit)
-                {
-                    addedStorageLimit.Remove(entity);
-                }
-                foreach (Entity entity in toRemoveFromAddedCargoTransport)
-                {
-                    addedCargoTransport.Remove(entity);
-                }
-            }
-            else if ((storageActive || recyclingActive))
-            {
-                EntityQuery storageBuildingsQuery = SystemAPI
-                    .QueryBuilder()
-                    .WithAny<ResourceProductionData, StorageLimitData>()
-                    .WithNone<CompanyBrandElement, OutsideConnectionData, ServiceUpgradeData>()
-                    .Build();
-                var storageBuildings = storageBuildingsQuery.ToEntityArray(Allocator.Temp);
-                foreach (var entity in storageBuildings)
-                {
-                    EntityManager.TryGetComponent(entity, out PrefabData prefabData);
-                    prefabSystem.TryGetPrefab(prefabData, out PrefabBase prefabBase);
+        //            if (prefabBase == null)
+        //            {
+        //                continue;
+        //            }
+        //            prefabBase.Remove<CargoTransportStation>();
+        //            UpdatePrefab(prefabBase);
+        //            toRemoveFromAddedCargoTransport.Add(entity);
+        //        }
+        //        changeCount--;
+        //        isStorageSet = false;
+        //        foreach (Entity entity in toRemoveFromAddedStorageLimit)
+        //        {
+        //            addedStorageLimit.Remove(entity);
+        //        }
+        //        foreach (Entity entity in toRemoveFromAddedCargoTransport)
+        //        {
+        //            addedCargoTransport.Remove(entity);
+        //        }
+        //    }
+        //    else if ((storageActive || recyclingActive))
+        //    {
+        //        EntityQuery storageBuildingsQuery = SystemAPI
+        //            .QueryBuilder()
+        //            .WithAny<ResourceProductionData, StorageLimitData>()
+        //            .WithNone<CompanyBrandElement, OutsideConnectionData, ServiceUpgradeData>()
+        //            .Build();
+        //        var storageBuildings = storageBuildingsQuery.ToEntityArray(Allocator.Temp);
+        //        foreach (var entity in storageBuildings)
+        //        {
+        //            EntityManager.TryGetComponent(entity, out PrefabData prefabData);
+        //            prefabSystem.TryGetPrefab(prefabData, out PrefabBase prefabBase);
 
-                    if (prefabBase == null)
-                    {
-                        continue;
-                    }
+        //            if (prefabBase == null)
+        //            {
+        //                continue;
+        //            }
 
-                    //string name = $"{prefabSystem.GetPrefabName(entity)}";
-                    if (
-                        storageActive
-                        && !prefabBase.Has<CargoTransportStation>()
-                        && prefabBase.Has<StorageLimit>()
-                    )
-                    {
-                        // add ctl by product
-                        CargoTransportStation cts =
-                            prefabBase.AddComponent<CargoTransportStation>();
-                        cts.transports = 1;
-                        cts.m_TransportInterval = new int2(0, 0);
+        //            //string name = $"{prefabSystem.GetPrefabName(entity)}";
+        //            if (
+        //                storageActive
+        //                && !prefabBase.Has<CargoTransportStation>()
+        //                && prefabBase.Has<StorageLimit>()
+        //            )
+        //            {
+        //                // add ctl by product
+        //                CargoTransportStation cts =
+        //                    prefabBase.AddComponent<CargoTransportStation>();
+        //                cts.transports = 1;
+        //                cts.m_TransportInterval = new int2(0, 0);
 
-                        if (!addedCargoTransport.Contains(entity))
-                            addedCargoTransport.Add(entity);
-                        UpdatePrefab(prefabBase);
-                        //LogHelper.SendLog($"{name} has stl but no ctl, added ctl");
-                    }
-                    else if (
-                        recyclingActive
-                        && !prefabBase.Has<CargoTransportStation>()
-                        && !prefabBase.Has<StorageLimit>()
-                    )
-                    {
-                        int storageValue = 0;
-                        List<ResourceInEditor> res = new();
-                        if (prefabBase.TryGet(out ResourceProducer rp))
-                        {
-                            bool isRecycling = false;
-                            if (prefabBase.TryGet(out GarbageFacility grbg))
-                            {
-                                isRecycling = true;
-                                storageValue += grbg.m_GarbageCapacity;
-                                if (!prefabBase.Has<TransportStop>())
-                                {
-                                    var tpStop = prefabBase.AddComponent<TransportStop>();
-                                    tpStop.m_AccessConnectionType = RouteConnectionType.None;
-                                    tpStop.m_RouteConnectionType = RouteConnectionType.Cargo;
-                                    tpStop.m_AccessRoadType = Game.Net.RoadTypes.Car;
-                                    tpStop.m_CargoTransport = true;
-                                    tpStop.m_PassengerTransport = false;
-                                }
-                                res.Add(ResourceInEditor.Money);
-                            }
-                            for (int rrr = 0; rrr < rp.m_Resources.Length; rrr++)
-                            {
-                                var rpr = rp.m_Resources[rrr];
-                                storageValue += rpr.m_StorageCapacity;
-                                if (!isRecycling)
-                                {
-                                    res.Add(rpr.m_Resource);
-                                }
-                            }
+        //                if (!addedCargoTransport.Contains(entity))
+        //                    addedCargoTransport.Add(entity);
+        //                UpdatePrefab(prefabBase);
+        //                //LogHelper.SendLog($"{name} has stl but no ctl, added ctl");
+        //            }
+        //            else if (
+        //                recyclingActive
+        //                && !prefabBase.Has<CargoTransportStation>()
+        //                && !prefabBase.Has<StorageLimit>()
+        //            )
+        //            {
+        //                int storageValue = 0;
+        //                List<ResourceInEditor> res = new();
+        //                if (prefabBase.TryGet(out ResourceProducer rp))
+        //                {
+        //                    bool isRecycling = false;
+        //                    if (prefabBase.TryGet(out GarbageFacility grbg))
+        //                    {
+        //                        isRecycling = true;
+        //                        storageValue += grbg.m_GarbageCapacity;
+        //                        if (!prefabBase.Has<TransportStop>())
+        //                        {
+        //                            var tpStop = prefabBase.AddComponent<TransportStop>();
+        //                            tpStop.m_AccessConnectionType = RouteConnectionType.None;
+        //                            tpStop.m_RouteConnectionType = RouteConnectionType.Cargo;
+        //                            tpStop.m_AccessRoadType = Game.Net.RoadTypes.Car;
+        //                            tpStop.m_CargoTransport = true;
+        //                            tpStop.m_PassengerTransport = false;
+        //                        }
+        //                        res.Add(ResourceInEditor.Money);
+        //                    }
+        //                    for (int rrr = 0; rrr < rp.m_Resources.Length; rrr++)
+        //                    {
+        //                        var rpr = rp.m_Resources[rrr];
+        //                        storageValue += rpr.m_StorageCapacity;
+        //                        if (!isRecycling)
+        //                        {
+        //                            res.Add(rpr.m_Resource);
+        //                        }
+        //                    }
 
-                            if (storageValue == 0)
-                            {
-                                storageValue = 1;
-                            }
+        //                    if (storageValue == 0)
+        //                    {
+        //                        storageValue = 1;
+        //                    }
 
-                            var stlN = prefabBase.AddComponent<StorageLimit>();
-                            stlN.storageLimit = storageValue;
-                            if (!addedStorageLimit.Contains(entity))
-                                addedStorageLimit.Add(entity);
-                            var ctsN = prefabBase.AddComponent<CargoTransportStation>();
-                            ctsN.m_TradedResources = res.ToArray();
-                            if (!addedCargoTransport.Contains(entity))
-                                addedCargoTransport.Add(entity);
-                            //LogHelper.SendLog(
-                            //    $"{name} has no stl (added {storageValue}) and no ctl (added)"
-                            //);
-                            UpdatePrefab(prefabBase);
-                        }
-                    }
-                }
-                changeCount++;
-                isStorageSet = true;
-                SetState();
-            }
-        }
+        //                    var stlN = prefabBase.AddComponent<StorageLimit>();
+        //                    stlN.storageLimit = storageValue;
+        //                    if (!addedStorageLimit.Contains(entity))
+        //                        addedStorageLimit.Add(entity);
+        //                    var ctsN = prefabBase.AddComponent<CargoTransportStation>();
+        //                    ctsN.m_TradedResources = res.ToArray();
+        //                    if (!addedCargoTransport.Contains(entity))
+        //                        addedCargoTransport.Add(entity);
+        //                    //LogHelper.SendLog(
+        //                    //    $"{name} has no stl (added {storageValue}) and no ctl (added)"
+        //                    //);
+        //                    UpdatePrefab(prefabBase);
+        //                }
+        //            }
+        //        }
+        //        changeCount++;
+        //        isStorageSet = true;
+        //        SetState();
+        //    }
+        //}
 
         public void FixHoveringPoles(bool active = true)
         {
@@ -1149,6 +1153,77 @@ namespace PrefabAssetFixes.Systems
                             UpdatePrefab(pb);
                         }
                     }
+
+                    SetState();
+                }
+            }
+        }
+
+        public void FixAdditionalTransformers(bool active = true)
+        {
+            if (!systemReady)
+                return;
+            if (!active && !isAdditionalTransformersSet)
+                return;
+            if (
+                prefabSystem.TryGetPrefab(
+                    new PrefabID(
+                        "BuildingPrefab",
+                        "SolarPowerStation01 Additional Transformer Station"
+                    ),
+                    out PrefabBase additionalTransformer
+                )
+                && additionalTransformer.Has<ServiceUpgrade>()
+                && prefabSystem.TryGetPrefab(
+                    new PrefabID("BuildingPrefab", "SolarPowerStation01"),
+                    out PrefabBase solarPowerStation
+                )
+            )
+            {
+                bool changed = false;
+
+                ServiceUpgrade su = additionalTransformer.GetComponent<ServiceUpgrade>();
+                List<BuildingPrefab> bps = new() { (BuildingPrefab)solarPowerStation };
+
+                List<string> buildings = new()
+                {
+                    "NuclearPowerPlant01",
+                    "HydroelectricPowerPlant01",
+                };
+
+                if (!active && !firstPass)
+                {
+                    changeCount--;
+                    isAdditionalTransformersSet = false;
+                    changed = true;
+                }
+                else if (active)
+                {
+                    for (int i = 0; i < buildings.Count; i++)
+                    {
+                        if (
+                            prefabSystem.TryGetPrefab(
+                                new PrefabID("BuildingPrefab", buildings[i]),
+                                out PrefabBase powerPrefab
+                            ) && powerPrefab.Has<PowerPlant>()
+                        )
+                            bps.Add((BuildingPrefab)powerPrefab);
+                    }
+
+                    changeCount++;
+                    isAdditionalTransformersSet = true;
+                    changed = true;
+                }
+                if (changed)
+                {
+                    su.m_Buildings = bps.ToArray();
+
+                    foreach (var building in bps)
+                    {
+                        building.AddUpgrade(EntityManager, su);
+                        //UpdatePrefab(building);
+                    }
+                    UpdatePrefab(additionalTransformer);
 
                     SetState();
                 }

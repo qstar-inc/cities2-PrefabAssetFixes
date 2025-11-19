@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Reflection;
 using Colossal.IO.AssetDatabase;
+using Colossal.Localization;
 using Colossal.Logging;
 using Game;
 using Game.Modding;
@@ -24,24 +25,16 @@ namespace PrefabAssetFixes
             .Version.ToString(3);
 
         public static ILog log = LogManager.GetLogger($"{Id}").SetShowsErrorsInUI(false);
-
         public static Setting m_Setting;
+
         public static string State = "";
-        public static string supportedGameVersion = "1.3.5f1";
+        public static string supportedGameVersion = "1.4.2f1";
         public static ModState modState = ModState.None;
 
         public void OnLoad(UpdateSystem updateSystem)
         {
             LogHelper.Init(Id, log);
-            LocaleHelper.Init(Id, GetReplacements);
-            foreach (var item in new LocaleHelper($"{Id}.Locale.json").GetAvailableLanguages())
-            {
-                GameManager.instance.localizationManager.AddSource(item.LocaleId, item);
-            }
-
-            GameManager.instance.localizationManager.onActiveDictionaryChanged +=
-                LocaleHelper.OnActiveDictionaryChanged;
-            GameManager.instance.localizationManager.onActiveDictionaryChanged += UpdateState;
+            LocaleHelper.Init(Id, Name, GetReplacements);
 
             m_Setting = new Setting(this);
             m_Setting.RegisterInOptionsUI();
@@ -75,11 +68,8 @@ namespace PrefabAssetFixes
 
         public void OnDispose()
         {
-            if (m_Setting != null)
-            {
-                m_Setting.UnregisterInOptionsUI();
-                m_Setting = null;
-            }
+            m_Setting?.UnregisterInOptionsUI();
+            m_Setting = null;
         }
 
         public static Dictionary<string, string> GetReplacements()
