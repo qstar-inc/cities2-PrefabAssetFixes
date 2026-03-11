@@ -1241,32 +1241,50 @@ namespace PrefabAssetFixes.Systems
             }
             else if (active)
             {
-                DynamicBuffer<UnlockOnBuildData> uobNew = default;
                 if (!EntityManager.HasBuffer<UnlockOnBuildData>(frCityHallEntity))
-                    uobNew = EntityManager.AddBuffer<UnlockOnBuildData>(frCityHallEntity);
+                    EntityManager.AddBuffer<UnlockOnBuildData>(frCityHallEntity);
 
-                for (int i = 0; i < uob0.Length; i++)
-                {
-                    uobNew.Add(uob0[i]);
-                }
+                if (
+                    EntityManager.TryGetBuffer(
+                        frCityHallEntity,
+                        false,
+                        out DynamicBuffer<UnlockOnBuildData> uobNew
+                    )
+                )
+                    for (int i = 0; i < uob0.Length; i++)
+                    {
+                        uobNew.Add(uob0[i]);
+                    }
 
-                DynamicBuffer<UnlockOnBuildData> uobNew1 = default;
                 if (!EntityManager.HasBuffer<UnlockOnBuildData>(frCityHallUp1Entity))
-                    uobNew1 = EntityManager.AddBuffer<UnlockOnBuildData>(frCityHallUp1Entity);
+                    EntityManager.AddBuffer<UnlockOnBuildData>(frCityHallUp1Entity);
 
-                for (int i = 0; i < uob1.Length; i++)
-                {
-                    uobNew1.Add(uob1[i]);
-                }
+                if (
+                    EntityManager.TryGetBuffer(
+                        frCityHallUp1Entity,
+                        false,
+                        out DynamicBuffer<UnlockOnBuildData> uobNew1
+                    )
+                )
+                    for (int i = 0; i < uob1.Length; i++)
+                    {
+                        uobNew1.Add(uob1[i]);
+                    }
 
-                DynamicBuffer<UnlockOnBuildData> uobNew2 = default;
                 if (!EntityManager.HasBuffer<UnlockOnBuildData>(frCityHallUp2Entity))
-                    uobNew2 = EntityManager.AddBuffer<UnlockOnBuildData>(frCityHallUp2Entity);
+                    EntityManager.AddBuffer<UnlockOnBuildData>(frCityHallUp2Entity);
 
-                for (int i = 0; i < uob2.Length; i++)
-                {
-                    uobNew2.Add(uob2[i]);
-                }
+                if (
+                    EntityManager.TryGetBuffer(
+                        frCityHallUp2Entity,
+                        false,
+                        out DynamicBuffer<UnlockOnBuildData> uobNew2
+                    )
+                )
+                    for (int i = 0; i < uob2.Length; i++)
+                    {
+                        uobNew2.Add(uob2[i]);
+                    }
                 changed = true;
                 LogHelper.SendLog($"FR City Hall unlocks fix completed", LogLevel.DEVD);
             }
