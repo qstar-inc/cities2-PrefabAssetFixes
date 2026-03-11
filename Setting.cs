@@ -17,31 +17,17 @@ namespace PrefabAssetFixes
             : base(mod) => SetDefaults();
 
         public const string GeneralTab = "GeneralTab";
-        public const string FunctionalGroup = "Functional Fixes";
-        public const string VisualGroup = "Visual Fixes";
+        public const string FunctionalGroup = "FunctionalGroup";
+        public const string VisualGroup = "VisualGroup";
 
         public const string AboutTab = "AboutTab";
-        public const string InfoGroup = "Info";
+        public const string InfoGroup = "InfoGroup";
 
         public const string LogTab = "LogTab";
 
         [Exclude]
         public AssetFixSystem assetFixSystem =
             World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<AssetFixSystem>();
-
-        //[Exclude]
-        //private bool _prisonVan;
-
-        //[SettingsUISection(OptionsTab, FunctionalGroup)]
-        //public bool PrisonVan
-        //{
-        //    get => _prisonVan;
-        //    set
-        //    {
-        //        _prisonVan = value;
-        //        assetFixSystem.FixPrisonBus01(value);
-        //    }
-        //}
 
         [Exclude]
         private bool _prison;
@@ -56,40 +42,6 @@ namespace PrefabAssetFixes
                 assetFixSystem.FixPrison01(value);
             }
         }
-
-        //public bool DisabledTrue()
-        //{
-        //    return true;
-        //}
-
-        //[Exclude]
-        //private bool _storage;
-
-        //[SettingsUIDisableByCondition(typeof(Setting), nameof(DisabledTrue))]
-        //[SettingsUISection(OptionsTab, VisualGroup)]
-        //public bool Storage
-        //{
-        //    get => _storage;
-        //    set
-        //    {
-        //        _storage = value;
-        //        assetFixSystem.FixStorageMissing(value, Recycling);
-        //    }
-        //}
-
-        //[Exclude]
-        //private bool _recycling;
-
-        //[SettingsUISection(OptionsTab, FunctionalGroup)]
-        //public bool Recycling
-        //{
-        //    get => _recycling;
-        //    set
-        //    {
-        //        _recycling = value;
-        //        assetFixSystem.FixStorageMissing(Storage, value);
-        //    }
-        //}
 
         [Exclude]
         private bool _hospital;
@@ -249,19 +201,36 @@ namespace PrefabAssetFixes
             }
         }
 
-        //[Exclude]
-        //private bool _additional_transformers;
+        [Exclude]
+        private bool _additional_transformers;
 
-        //[SettingsUISection(GeneralTab, FunctionalGroup)]
-        //public bool AdditionalTransformers
-        //{
-        //    get => _additional_transformers;
-        //    set
-        //    {
-        //        _additional_transformers = value;
-        //        assetFixSystem.FixAdditionalTransformers(value);
-        //    }
-        //}
+        [SettingsUISection(GeneralTab, FunctionalGroup)]
+        public bool AdditionalTransformers
+        {
+            get => _additional_transformers;
+            set
+            {
+                _additional_transformers = value;
+                assetFixSystem.FixAdditionalTransformers(value);
+            }
+        }
+
+        [Exclude]
+        private bool _fr_CityHall;
+
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(Has_RP_FR))]
+        [SettingsUISection(GeneralTab, FunctionalGroup)]
+        public bool FRCiltyHall
+        {
+            get => _fr_CityHall;
+            set
+            {
+                _fr_CityHall = value;
+                assetFixSystem.FixFRCityHall(value);
+            }
+        }
+
+        private bool Has_RP_FR() => !assetFixSystem.IsActive(AssetFixSystem.PackType.RP_FR);
 
         private bool Has_RP_CN() => !assetFixSystem.IsActive(AssetFixSystem.PackType.RP_CN);
 
@@ -269,21 +238,14 @@ namespace PrefabAssetFixes
 
         private bool Has_RP_NL() => !assetFixSystem.IsActive(AssetFixSystem.PackType.RP_NL);
 
-        private bool Has_RP_CN_or_USSW() =>
-            !(
-                assetFixSystem.IsActive(AssetFixSystem.PackType.RP_CN)
-                || assetFixSystem.IsActive(AssetFixSystem.PackType.RP_USSW)
-            );
+        private bool Has_RP_CN_or_USSW() => !(Has_RP_CN() && Has_RP_USSW());
 
         private bool Has_DLC_MA() => !assetFixSystem.IsActive(AssetFixSystem.PackType.DLC_MA);
 
         public override void SetDefaults()
         {
             Prison = true;
-            //PrisonVan = true;
-            //Storage = false;
             Hospital = true;
-            //Recycling = true;
             HoveringPoles = true;
             USSWHospital = true;
             SolarParking = true;
@@ -294,9 +256,14 @@ namespace PrefabAssetFixes
             LHTCargoHarbor01 = true;
             RHTBusStation01 = true;
             NLLowHousehold = true;
-            //AdditionalTransformers = true;
+            AdditionalTransformers = true;
+            FRCiltyHall = true;
         }
 
+        [Exclude]
+        public int ModStateVersion => 0;
+
+        [SettingsUIValueVersion(typeof(Setting), nameof(ModStateVersion))]
         [SettingsUISection(AboutTab, InfoGroup)]
         public string ModState => Mod.State;
 
@@ -324,6 +291,15 @@ namespace PrefabAssetFixes
         {
             set => VariableHelper.OpenDiscord("1390407455522951228");
         }
+
+#if DEBUG
+        [SettingsUIButton]
+        [SettingsUISection(AboutTab, InfoGroup)]
+        public bool Test
+        {
+            set => WorldHelper.GetSystem<TestSystem>().Test();
+        }
+#endif
 
         [SettingsUIMultilineText]
         [SettingsUIDisplayName(typeof(LogHelper), nameof(LogHelper.LogText))]

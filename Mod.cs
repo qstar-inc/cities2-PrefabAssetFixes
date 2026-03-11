@@ -28,7 +28,7 @@ namespace PrefabAssetFixes
         public static Setting m_Setting;
 
         public static string State = "";
-        public static string supportedGameVersion = "1.4.2f1";
+        public static string supportedGameVersion = "1.5.5f1";
         public static ModState modState = ModState.None;
 
         public void OnLoad(UpdateSystem updateSystem)
@@ -45,25 +45,18 @@ namespace PrefabAssetFixes
             modState = ModState.Ready;
             UpdateState();
 
-            if (!Game.Version.current.shortVersion.StartsWith(supportedGameVersion))
-            {
-                LogHelper.SendLog(
-                    $"Disabling mod because {Game.Version.current.shortVersion} is not {supportedGameVersion}"
-                );
-                World
-                    .DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<AssetFixSystem>()
-                    .Enabled = false;
-                modState = ModState.Incompatible;
-                UpdateState();
-                AssetFixSystem.systemDisposed = true;
-                return;
-            }
-
-            //updateSystem.UpdateAfter<
-            //    AchievementEnabler,
-            //    Game.Achievements.AchievementTriggerSystem
-            //>(SystemUpdatePhase.MainLoop);
-            //updateSystem.UpdateAt<AssetFixSystem>(SystemUpdatePhase.Modification3);
+            //if (!Game.Version.current.shortVersion.StartsWith(supportedGameVersion))
+            //{
+            //    LogHelper.SendLog(
+            //        $"{Game.Version.current.shortVersion} is not {supportedGameVersion}"
+            //    );
+            //    //World
+            //    //    .DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<AssetFixSystem>()
+            //    //    .Enabled = false;
+            //    modState = ModState.Incompatible;
+            //    UpdateState();
+            //    //AssetFixSystem.systemDisposed = true;
+            //}
         }
 
         public void OnDispose()

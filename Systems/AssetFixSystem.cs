@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Colossal.Entities;
 using Colossal.Serialization.Entities;
 using Game;
+using Game.Companies;
 using Game.Prefabs;
 using StarQ.Shared.Extensions;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
-using ServiceUpgrade = Game.Prefabs.ServiceUpgrade;
 
 namespace PrefabAssetFixes.Systems
 {
@@ -35,15 +34,9 @@ namespace PrefabAssetFixes.Systems
         public static bool systemDisposed = false;
         public static bool systemReady = false;
 
-        private readonly List<Entity> addedStorageLimit = new();
-        private readonly List<Entity> addedCargoTransport = new();
         private readonly Dictionary<string, float> polePositions = new();
-        private readonly Dictionary<Entity, ObjectPrefab[]> extractorsModified = new();
 
         private bool isPrisonSet = false;
-
-        //private bool isPrisonVanSet = false;
-        //private bool isStorageSet = false;
         private bool isHospitalSet = false;
         private bool isPolesSet = false;
         private bool isUSSWHospitalSet = false;
@@ -55,19 +48,26 @@ namespace PrefabAssetFixes.Systems
         private bool isLHTCargoHarbor01Set = false;
         private bool isRHTBusStation01Set = false;
         private bool isNLLowHouseholdSet = false;
+        private bool isFRCityHallSet = false;
         private bool isAdditionalTransformersSet = false;
 
-        //private bool isExtractorsDisabled = false;
-
-        //private bool isHarborSet = false;
-
+        private bool hasRP_FR;
         private bool hasRP_CN;
         private bool hasRP_USSW;
         private bool hasDLC_MA;
         private bool hasRP_NL;
 
+        public static Entity FlagPoleCommercial02Entity;
+        public static Entity Screen01Entity;
+        public static Entity Screen02Entity;
+        public static Entity BillboardWallMedium01Entity;
+        public static Entity CarSpawnMarker;
+        public static Entity parkingService04Ent;
+        public static Entity parking04Ent;
+
         public enum PackType
         {
+            RP_FR,
             RP_CN,
             RP_USSW,
             DLC_MA,
@@ -77,27 +77,22 @@ namespace PrefabAssetFixes.Systems
         protected override void OnCreate()
         {
             base.OnCreate();
-            prefabSystem =
-                World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<PrefabSystem>();
+            prefabSystem = WorldHelper.PrefabSystem;
+            ModHelper.AddAfterActivePlaysetOrModStatusChanged(CheckCount);
+            CheckCount();
         }
 
         public bool IsActive(PackType packType)
         {
             return packType switch
             {
+                PackType.RP_FR => hasRP_FR,
                 PackType.RP_CN => hasRP_CN,
                 PackType.RP_USSW => hasRP_USSW,
                 PackType.DLC_MA => hasDLC_MA,
                 PackType.RP_NL => hasRP_NL,
                 _ => false,
             };
-        }
-
-        protected override void OnGameLoadingComplete(Purpose purpose, GameMode mode)
-        {
-            base.OnGameLoadingComplete(purpose, mode);
-            if (totalCount == 0)
-                CheckCount();
         }
 
         private void CheckCount()
@@ -109,50 +104,107 @@ namespace PrefabAssetFixes.Systems
 
             totalCount -= 2;
             // prison van + recycling
+
             if (
                 prefabSystem.TryGetPrefab(
-                    new PrefabID("BuildingPrefab", "CN_OfficeHighA_L1_6x6"),
+                    new PrefabID(nameof(AssetPackPrefab), "FR Pack Filter"),
+                    out PrefabBase _
+                )
+            )
+            {
+                hasRP_FR = true;
+                totalCount++;
+                LogHelper.SendLog("Found RP_FR Pack", LogLevel.DEVD);
+            }
+            if (
+                prefabSystem.TryGetPrefab(
+                    new PrefabID(nameof(BuildingPrefab), "CN_OfficeHighA_L1_6x6"),
                     out PrefabBase _
                 )
             )
             {
                 hasRP_CN = true;
                 totalCount++;
+                LogHelper.SendLog("Found RP_CN Pack", LogLevel.DEVD);
+
+                PrefabHelper.TryGetEntity(
+                    new PrefabID(nameof(StaticObjectPrefab), "FlagPoleCommercial02"),
+                    out FlagPoleCommercial02Entity
+                );
             }
             if (
                 prefabSystem.TryGetPrefab(
-                    new PrefabID("BuildingPrefab", "USSW_Hospital_16x14"),
+                    new PrefabID(nameof(BuildingPrefab), "USSW_Hospital_16x14"),
                     out PrefabBase _
                 )
             )
             {
                 hasRP_USSW = true;
                 totalCount++;
+                LogHelper.SendLog("Found RP_USSW Pack", LogLevel.DEVD);
+
+                PrefabHelper.TryGetEntity(
+                    new PrefabID(nameof(StaticObjectPrefab), "Screen01"),
+                    out Screen01Entity
+                );
+
+                PrefabHelper.TryGetEntity(
+                    new PrefabID(nameof(StaticObjectPrefab), "Screen02"),
+                    out Screen02Entity
+                );
+
+                PrefabHelper.TryGetEntity(
+                    new PrefabID(nameof(StaticObjectPrefab), "BillboardWallMedium01"),
+                    out BillboardWallMedium01Entity
+                );
             }
             if (
                 prefabSystem.TryGetPrefab(
-                    new PrefabID("BuildingPrefab", "RS_MedicalClinic01"),
+                    new PrefabID(nameof(BuildingPrefab), "RS_MedicalClinic01"),
                     out PrefabBase _
                 )
             )
             {
                 hasDLC_MA = true;
                 totalCount++;
+                LogHelper.SendLog("Found DLC_MA Pack", LogLevel.DEVD);
             }
             if (
                 prefabSystem.TryGetPrefab(
-                    new PrefabID("AssetPackPrefab", "NL Pack Filter"),
+                    new PrefabID(nameof(AssetPackPrefab), "NL Pack Filter"),
                     out PrefabBase _
                 )
             )
             {
                 hasRP_NL = true;
                 totalCount++;
+                LogHelper.SendLog("Found RP_NL Pack", LogLevel.DEVD);
             }
+
+            PrefabHelper.TryGetEntity(
+                new PrefabID(nameof(MarkerObjectPrefab), "Car Spawn Location"),
+                out CarSpawnMarker
+            );
+            PrefabHelper.TryGetEntity(
+                new PrefabID(nameof(StaticObjectPrefab), "ParkingLotDecal04"),
+                out parking04Ent
+            );
+            PrefabHelper.TryGetEntity(
+                new PrefabID(nameof(StaticObjectPrefab), "ParkingLotServiceDecal04"),
+                out parkingService04Ent
+            );
+        }
+
+        protected override void OnGameLoadingComplete(Purpose purpose, GameMode mode)
+        {
+            base.OnGameLoadingComplete(purpose, mode);
+            if (firstPass)
+                CheckCount();
         }
 
         protected override void OnGamePreload(Purpose purpose, GameMode mode)
         {
+            CheckCount();
             if (systemDisposed || prefabSystem == null)
                 return;
 
@@ -161,9 +213,7 @@ namespace PrefabAssetFixes.Systems
 
             if (mode == GameMode.Editor)
             {
-                //FixPrisonBus01(false);
                 FixPrison01(false);
-                //FixStorageMissing(false, false);
                 FixHostipal01(false);
                 FixHoveringPoles(false);
                 FixUSSWHospital(false);
@@ -175,13 +225,12 @@ namespace PrefabAssetFixes.Systems
                 FixLHTCargoHarbor01(false);
                 FixRHTBusStation01(false);
                 FixNLLowHousehold(false);
-                //FixExtractorSpawning(false);
+                FixAdditionalTransformers(false);
+                FixFRCityHall(false);
             }
             if (mode != GameMode.Game)
                 return;
-            //#endif
 
-            FixAdditionalTransformers();
             firstPass = false;
             StartFixes();
             SetState();
@@ -194,17 +243,12 @@ namespace PrefabAssetFixes.Systems
                 return;
             LogHelper.SendLog("Starting Fixes");
             Setting settings = Mod.m_Setting;
-            //if (settings.PrisonVan)
-            //    FixPrisonBus01();
             if (settings.Prison)
                 FixPrison01();
-            //if (settings.Storage || settings.Recycling)
-            //    FixStorageMissing(settings.Storage, settings.Recycling);
             if (settings.Hospital)
                 FixHostipal01();
             if (settings.HoveringPoles && (IsActive(PackType.RP_CN) || IsActive(PackType.RP_USSW)))
                 FixHoveringPoles();
-            //FixHarbourExtBase();
             if (settings.USSWHospital && IsActive(PackType.RP_USSW))
                 FixUSSWHospital();
             if (settings.SolarParking)
@@ -223,13 +267,10 @@ namespace PrefabAssetFixes.Systems
                 FixRHTBusStation01();
             if (settings.NLLowHousehold && IsActive(PackType.RP_NL))
                 FixNLLowHousehold();
-            //if (settings.AdditionalTransformers)
-            //    FixAdditionalTransformers();
-            //if (1 == 1)
-            //{
-            //    //FixExtractorSpawning(false);
-            //    FixOfficeLowStorage();
-            //}
+            if (settings.AdditionalTransformers)
+                FixAdditionalTransformers();
+            if (settings.FRCiltyHall && IsActive(PackType.RP_FR))
+                FixFRCityHall();
         }
 
         protected override void OnUpdate() { }
@@ -238,7 +279,7 @@ namespace PrefabAssetFixes.Systems
         {
             if (
                 Mod.modState == ModState.None
-                || Mod.modState == ModState.Incompatible
+                //|| Mod.modState == ModState.Incompatible
                 || firstPass
                 || systemDisposed
                 || !systemReady
@@ -248,48 +289,6 @@ namespace PrefabAssetFixes.Systems
             LogHelper.SendLog($"{changeCount} changes set");
         }
 
-        public void UpdatePrefab(PrefabBase prefabBase)
-        {
-            prefabSystem.UpdatePrefab(prefabBase);
-            LogHelper.SendLog($"{prefabBase.name} updated");
-        }
-
-        //public void FixPrisonBus01(bool active = true)
-        //{
-        //    if (!systemReady)
-        //        return;
-        //    if (!active && !isPrisonVanSet)
-        //        return;
-        //    if (
-        //        prefabSystem.TryGetPrefab(
-        //            new PrefabID("CarPrefab", "PrisonVan01"),
-        //            out PrefabBase prefabBase
-        //        ) && prefabBase.TryGet(out CarPrefab prisonVan)
-        //    )
-        //    {
-        //        bool changed = false;
-        //        if (!active && !firstPass)
-        //        {
-        //            prisonVan.m_SizeClass = Game.Vehicles.SizeClass.Medium;
-        //            changeCount--;
-        //            isPrisonVanSet = false;
-        //            changed = true;
-        //        }
-        //        else if (active)
-        //        {
-        //            prisonVan.m_SizeClass = Game.Vehicles.SizeClass.Large;
-        //            changeCount++;
-        //            isPrisonVanSet = true;
-        //            changed = true;
-        //        }
-        //        if (changed)
-        //        {
-        //            UpdatePrefab(prefabBase);
-        //            SetState();
-        //        }
-        //    }
-        //}
-
         public void FixPrison01(bool active = true)
         {
             if (!systemReady)
@@ -297,30 +296,31 @@ namespace PrefabAssetFixes.Systems
             if (!active && !isPrisonSet)
                 return;
             if (
-                prefabSystem.TryGetPrefab(
-                    new PrefabID("BuildingPrefab", "Prison01"),
-                    out PrefabBase prefabBase
-                ) && prefabBase.TryGet(out Game.Prefabs.Prison prison)
+                PrefabHelper.TryGetEntity(
+                    new PrefabID(nameof(BuildingPrefab), "Prison01"),
+                    out Entity selectedPrefab
+                ) && EntityManager.TryGetComponent(selectedPrefab, out PrisonData pvd)
             )
             {
                 bool changed = false;
                 if (!active && !firstPass)
                 {
-                    prison.m_PrisonVanCapacity = 10;
+                    pvd.m_PrisonVanCapacity = 10;
                     changeCount--;
                     isPrisonSet = false;
                     changed = true;
                 }
                 else if (active)
                 {
-                    prison.m_PrisonVanCapacity = 20;
+                    pvd.m_PrisonVanCapacity = 20;
                     changeCount++;
                     isPrisonSet = true;
                     changed = true;
                 }
                 if (changed)
                 {
-                    UpdatePrefab(prefabBase);
+                    EntityManager.SetComponentData(selectedPrefab, pvd);
+                    LogHelper.SendLog("Prison01 fix completed", LogLevel.DEVD);
                     SetState();
                 }
             }
@@ -332,32 +332,32 @@ namespace PrefabAssetFixes.Systems
                 return;
             if (!active && !isHospitalSet)
                 return;
-            prefabSystem.TryGetPrefab(
-                new PrefabID("StaticObjectPrefab", "ParkingLotDecal04"),
-                out PrefabBase parking04
-            );
-            prefabSystem.TryGetPrefab(
-                new PrefabID("StaticObjectPrefab", "ParkingLotServiceDecal04"),
-                out PrefabBase parkingService04
-            );
 
             if (
-                prefabSystem.TryGetPrefab(
-                    new PrefabID("BuildingPrefab", "Hospital01"),
-                    out PrefabBase prefabBase
-                ) && prefabBase.TryGet(out ObjectSubObjects hospital)
+                PrefabHelper.TryGetEntity(
+                    new PrefabID(nameof(BuildingPrefab), "Hospital01"),
+                    out Entity selectedEntity
+                )
+                && EntityManager.TryGetBuffer(
+                    selectedEntity,
+                    false,
+                    out DynamicBuffer<SubObject> hospitalObj
+                )
             )
             {
                 bool changed = false;
                 if (!active && !firstPass)
                 {
-                    for (int indexH = 0; indexH < hospital.m_SubObjects.Length; indexH++)
+                    for (int i = hospitalObj.Length - 1; i >= 00; i--)
                     {
-                        var obj = hospital.m_SubObjects[indexH];
-                        string name = obj.m_Object.name;
-                        if (name == "ParkingLotServiceDecal04")
+                        var obj = hospitalObj[i];
+                        if (
+                            obj.m_Prefab == parkingService04Ent
+                            && Math.Round(obj.m_Position.x) == -82f
+                        )
                         {
-                            obj.m_Object = (ObjectPrefab)parking04;
+                            obj.m_Prefab = parking04Ent;
+                            hospitalObj[i] = obj;
                         }
                     }
                     changeCount--;
@@ -366,13 +366,13 @@ namespace PrefabAssetFixes.Systems
                 }
                 else if (active)
                 {
-                    for (int indexH = 0; indexH < hospital.m_SubObjects.Length; indexH++)
+                    for (int i = hospitalObj.Length - 1; i >= 00; i--)
                     {
-                        var obj = hospital.m_SubObjects[indexH];
-                        string name = obj.m_Object.name;
-                        if (name == "ParkingLotDecal04" && Math.Round(obj.m_Position.x) == -82f)
+                        var obj = hospitalObj[i];
+                        if (obj.m_Prefab == parking04Ent && Math.Round(obj.m_Position.x) == -82f)
                         {
-                            obj.m_Object = (ObjectPrefab)parkingService04;
+                            obj.m_Prefab = parkingService04Ent;
+                            hospitalObj[i] = obj;
                         }
                     }
                     changeCount++;
@@ -381,154 +381,11 @@ namespace PrefabAssetFixes.Systems
                 }
                 if (changed)
                 {
-                    UpdatePrefab(prefabBase);
+                    LogHelper.SendLog("Hostipal01 fix completed", LogLevel.DEVD);
                     SetState();
                 }
             }
         }
-
-        //public void FixStorageMissing(bool storageActive = true, bool recyclingActive = true)
-        //{
-        //    storageActive = false;
-        //    if (!systemReady)
-        //        return;
-        //    if (!storageActive && !recyclingActive && !isStorageSet)
-        //        return;
-        //    if (!(storageActive || recyclingActive) && !firstPass)
-        //    {
-        //        List<Entity> toRemoveFromAddedStorageLimit = new();
-        //        foreach (Entity entity in addedStorageLimit)
-        //        {
-        //            if (!prefabSystem.TryGetPrefab(entity, out PrefabBase prefabBase))
-        //            {
-        //                continue;
-        //            }
-        //            prefabBase.Remove<StorageLimit>();
-        //            UpdatePrefab(prefabBase);
-        //            toRemoveFromAddedStorageLimit.Add(entity);
-        //        }
-        //        List<Entity> toRemoveFromAddedCargoTransport = new();
-        //        foreach (Entity entity in addedCargoTransport)
-        //        {
-        //            EntityManager.TryGetComponent(entity, out PrefabData prefabData);
-        //            prefabSystem.TryGetPrefab(prefabData, out PrefabBase prefabBase);
-
-        //            if (prefabBase == null)
-        //            {
-        //                continue;
-        //            }
-        //            prefabBase.Remove<CargoTransportStation>();
-        //            UpdatePrefab(prefabBase);
-        //            toRemoveFromAddedCargoTransport.Add(entity);
-        //        }
-        //        changeCount--;
-        //        isStorageSet = false;
-        //        foreach (Entity entity in toRemoveFromAddedStorageLimit)
-        //        {
-        //            addedStorageLimit.Remove(entity);
-        //        }
-        //        foreach (Entity entity in toRemoveFromAddedCargoTransport)
-        //        {
-        //            addedCargoTransport.Remove(entity);
-        //        }
-        //    }
-        //    else if ((storageActive || recyclingActive))
-        //    {
-        //        EntityQuery storageBuildingsQuery = SystemAPI
-        //            .QueryBuilder()
-        //            .WithAny<ResourceProductionData, StorageLimitData>()
-        //            .WithNone<CompanyBrandElement, OutsideConnectionData, ServiceUpgradeData>()
-        //            .Build();
-        //        var storageBuildings = storageBuildingsQuery.ToEntityArray(Allocator.Temp);
-        //        foreach (var entity in storageBuildings)
-        //        {
-        //            EntityManager.TryGetComponent(entity, out PrefabData prefabData);
-        //            prefabSystem.TryGetPrefab(prefabData, out PrefabBase prefabBase);
-
-        //            if (prefabBase == null)
-        //            {
-        //                continue;
-        //            }
-
-        //            //string name = $"{prefabSystem.GetPrefabName(entity)}";
-        //            if (
-        //                storageActive
-        //                && !prefabBase.Has<CargoTransportStation>()
-        //                && prefabBase.Has<StorageLimit>()
-        //            )
-        //            {
-        //                // add ctl by product
-        //                CargoTransportStation cts =
-        //                    prefabBase.AddComponent<CargoTransportStation>();
-        //                cts.transports = 1;
-        //                cts.m_TransportInterval = new int2(0, 0);
-
-        //                if (!addedCargoTransport.Contains(entity))
-        //                    addedCargoTransport.Add(entity);
-        //                UpdatePrefab(prefabBase);
-        //                //LogHelper.SendLog($"{name} has stl but no ctl, added ctl");
-        //            }
-        //            else if (
-        //                recyclingActive
-        //                && !prefabBase.Has<CargoTransportStation>()
-        //                && !prefabBase.Has<StorageLimit>()
-        //            )
-        //            {
-        //                int storageValue = 0;
-        //                List<ResourceInEditor> res = new();
-        //                if (prefabBase.TryGet(out ResourceProducer rp))
-        //                {
-        //                    bool isRecycling = false;
-        //                    if (prefabBase.TryGet(out GarbageFacility grbg))
-        //                    {
-        //                        isRecycling = true;
-        //                        storageValue += grbg.m_GarbageCapacity;
-        //                        if (!prefabBase.Has<TransportStop>())
-        //                        {
-        //                            var tpStop = prefabBase.AddComponent<TransportStop>();
-        //                            tpStop.m_AccessConnectionType = RouteConnectionType.None;
-        //                            tpStop.m_RouteConnectionType = RouteConnectionType.Cargo;
-        //                            tpStop.m_AccessRoadType = Game.Net.RoadTypes.Car;
-        //                            tpStop.m_CargoTransport = true;
-        //                            tpStop.m_PassengerTransport = false;
-        //                        }
-        //                        res.Add(ResourceInEditor.Money);
-        //                    }
-        //                    for (int rrr = 0; rrr < rp.m_Resources.Length; rrr++)
-        //                    {
-        //                        var rpr = rp.m_Resources[rrr];
-        //                        storageValue += rpr.m_StorageCapacity;
-        //                        if (!isRecycling)
-        //                        {
-        //                            res.Add(rpr.m_Resource);
-        //                        }
-        //                    }
-
-        //                    if (storageValue == 0)
-        //                    {
-        //                        storageValue = 1;
-        //                    }
-
-        //                    var stlN = prefabBase.AddComponent<StorageLimit>();
-        //                    stlN.storageLimit = storageValue;
-        //                    if (!addedStorageLimit.Contains(entity))
-        //                        addedStorageLimit.Add(entity);
-        //                    var ctsN = prefabBase.AddComponent<CargoTransportStation>();
-        //                    ctsN.m_TradedResources = res.ToArray();
-        //                    if (!addedCargoTransport.Contains(entity))
-        //                        addedCargoTransport.Add(entity);
-        //                    //LogHelper.SendLog(
-        //                    //    $"{name} has no stl (added {storageValue}) and no ctl (added)"
-        //                    //);
-        //                    UpdatePrefab(prefabBase);
-        //                }
-        //            }
-        //        }
-        //        changeCount++;
-        //        isStorageSet = true;
-        //        SetState();
-        //    }
-        //}
 
         public void FixHoveringPoles(bool active = true)
         {
@@ -592,125 +449,110 @@ namespace PrefabAssetFixes.Systems
         public bool AddOn_FixPolesInRP(string prefabName, bool active)
         {
             if (
-                prefabSystem.TryGetPrefab(
-                    new PrefabID("BuildingPrefab", prefabName),
-                    out PrefabBase prefabBase
-                ) && prefabBase.TryGet(out ObjectSubObjects objects)
+                PrefabHelper.TryGetEntity(
+                    new PrefabID(nameof(BuildingPrefab), prefabName),
+                    out Entity selectedEntity
+                )
+                && EntityManager.TryGetBuffer(
+                    selectedEntity,
+                    false,
+                    out DynamicBuffer<SubObject> objBuffer
+                )
             )
             {
                 bool modified = false;
-                int i = 0;
-                foreach (var obj in objects.m_SubObjects)
+                int sl = 0;
+                for (int i = objBuffer.Length - 1; i >= 0; i--)
                 {
-                    if (prefabName.StartsWith("CN"))
+                    var subObject = objBuffer[i];
+                    if (
+                        prefabName.StartsWith("CN")
+                        && EntityManager.Exists(FlagPoleCommercial02Entity)
+                    )
                     {
-                        string name = obj.m_Object.name;
-                        if (name == "FlagPoleCommercial02")
+                        if (objBuffer[i].m_Prefab == FlagPoleCommercial02Entity)
                         {
-                            if (!active && Math.Round(obj.m_Position.y) == 124f)
+                            if (!active && Math.Round(subObject.m_Position.y) == 124f)
                             {
-                                obj.m_Position.y = 135f;
+                                subObject.m_Position.y = 135f;
                                 modified = true;
-                                //LogHelper.SendLog($"Reverted {prefabName} poles");
                             }
-                            else if (active && Math.Round(obj.m_Position.y) == 135f)
+                            else if (active && Math.Round(subObject.m_Position.y) == 135f)
                             {
-                                obj.m_Position.y = 124f;
+                                subObject.m_Position.y = 124f;
                                 modified = true;
-                                //LogHelper.SendLog($"Fixed {prefabName} poles");
                             }
+                            objBuffer[i] = subObject;
                         }
                     }
-                    else if (prefabName.StartsWith("USSW"))
+                    else if (
+                        prefabName.StartsWith("USSW")
+                        && (
+                            EntityManager.Exists(Screen01Entity)
+                            || EntityManager.Exists(Screen02Entity)
+                            || EntityManager.Exists(BillboardWallMedium01Entity)
+                        )
+                    )
                     {
-                        string name = obj.m_Object.name;
                         if (
-                            name == "Screen02"
-                            || name == "Screen01"
-                            || name == "BillboardWallMedium01"
+                            !active
+                            && (
+                                (
+                                    subObject.m_Prefab == BillboardWallMedium01Entity
+                                    && subObject.m_Position.y == 1.803f
+                                )
+                                || (
+                                    (
+                                        subObject.m_Prefab == Screen01Entity
+                                        || subObject.m_Prefab == Screen02Entity
+                                    )
+                                    && subObject.m_Position.y == 0.003f
+                                )
+                            )
                         )
                         {
                             if (
-                                !active
-                                && (
-                                    (name == "BillboardWallMedium01" && obj.m_Position.y == 1.803f)
-                                    || ((name.StartsWith("Screen0") && obj.m_Position.y == 0.003f))
+                                polePositions.TryGetValue(
+                                    prefabName + subObject.m_Prefab.Index + sl,
+                                    out float posY
                                 )
                             )
-                            {
-                                if (
-                                    polePositions.TryGetValue(prefabName + name + i, out float posY)
+                                subObject.m_Position.y = posY;
+
+                            modified = true;
+                            //LogHelper.SendLog($"Reverted {prefabName} {name}");
+                        }
+                        else if (active && Math.Round(subObject.m_Position.y) > 5f)
+                        {
+                            if (
+                                !polePositions.ContainsKey(
+                                    prefabName + subObject.m_Prefab.Index + sl
                                 )
-                                {
-                                    obj.m_Position.y = posY;
-                                }
-                                modified = true;
-                                //LogHelper.SendLog($"Reverted {prefabName} {name}");
-                            }
-                            else if (active && Math.Round(obj.m_Position.y) > 5f)
-                            {
-                                if (!polePositions.ContainsKey(prefabName + name + i))
-                                    polePositions.Add(prefabName + name + i, obj.m_Position.y);
-                                if (name == "BillboardWallMedium01")
-                                {
-                                    obj.m_Position.y = 1.803f;
-                                }
-                                else
-                                {
-                                    obj.m_Position.y = 0.003f;
-                                }
-                                modified = true;
-                                //LogHelper.SendLog($"Fixed {prefabName} {name}");
-                            }
+                            )
+                                polePositions.Add(
+                                    prefabName + subObject.m_Prefab.Index + sl,
+                                    subObject.m_Position.y
+                                );
+                            if (subObject.m_Prefab == BillboardWallMedium01Entity)
+                                subObject.m_Position.y = 1.803f;
+                            else
+                                subObject.m_Position.y = 0.003f;
+
+                            modified = true;
+                            //LogHelper.SendLog($"Fixed {prefabName} {name}");
                         }
                     }
-                    i++;
+                    objBuffer[i] = subObject;
+                    sl++;
                 }
 
                 if (modified)
-                    UpdatePrefab(prefabBase);
+                    LogHelper.SendLog("Hovering Poles fix completed", LogLevel.DEVD);
 
                 return modified;
             }
             return false;
         }
-
-        //public void FixHarbourExtBase(bool active = true)
-        //{
-        //    if (!active && !isHarborSet)
-        //        return;
-        //    if (
-        //        prefabSystem.TryGetPrefab(
-        //            new PrefabID("RenderPrefab", "Harbor01 Mesh"),
-        //            out PrefabBase harbor_ext1_mesh
-        //        )
-        //    )
-        //    {
-        //        if (!active && !firstPass && harbor_ext1_mesh.Has<BaseProperties>())
-        //        {
-        //            harbor_ext1_mesh.Remove<BaseProperties>();
-        //            changeCount--;
-        //            isHarborSet = false;
-        //            LogHelper.SendLog("Reverted Harbor Mesh");
-        //        }
-        //        else if (active && !harbor_ext1_mesh.Has<BaseProperties>())
-        //        {
-        //            prefabSystem.TryGetPrefab(
-        //                new PrefabID("RenderPrefab", "Default_Base Mesh"),
-        //                out PrefabBase defaultRP
-        //            );
-
-        //            BaseProperties bp = harbor_ext1_mesh.AddComponent<BaseProperties>();
-        //            bp.m_UseMinBounds = true;
-        //            bp.m_BaseType = (RenderPrefab)defaultRP;
-        //            changeCount++;
-        //            isHarborSet = true;
-        //            LogHelper.SendLog("Fixed Harbor Mesh");
-        //        }
-        //        prefabSystem.UpdatePrefab(harbor_ext1_mesh);
-        //        SetState();
-        //    }
-        //}
 
         public void FixUSSWHospital(bool active = true)
         {
@@ -721,109 +563,59 @@ namespace PrefabAssetFixes.Systems
             if (!active && !isUSSWHospitalSet)
                 return;
             if (
-                prefabSystem.TryGetPrefab(
-                    new PrefabID("BuildingPrefab", "USSW_Hospital_16x14"),
-                    out PrefabBase prefabBase
+                !PrefabHelper.TryGetEntity(
+                    new PrefabID(nameof(BuildingPrefab), "USSW_Hospital_16x14"),
+                    out Entity USSWHospital
+                )
+                || EntityManager.TryGetBuffer(
+                    USSWHospital,
+                    false,
+                    out DynamicBuffer<SubObject> hospitalObj
                 )
             )
+                return;
+
+            bool changed = false;
+            if (!active && !firstPass)
             {
-                bool changed = false;
-                if (!active && !firstPass && prefabBase.Has<ObjectSubObjects>())
+                hospitalObj.Add(
+                    new SubObject()
+                    {
+                        m_Prefab = CarSpawnMarker,
+                        m_Position = new float3(5.208054f, 0.01312256f, 46.25966f),
+                        m_Rotation = new quaternion(0, -.7731476f, 0, 0.634226f),
+                        m_Flags = SubObjectFlags.OnGround,
+                        m_ParentIndex = -1,
+                        m_GroupIndex = 0,
+                        m_Probability = 100,
+                    }
+                );
+                changeCount--;
+                isUSSWHospitalSet = false;
+                changed = true;
+            }
+            else if (active)
+            {
+                for (int i = hospitalObj.Length - 1; i >= 0; i--)
                 {
-                    ObjectSubObjects objectSubObjects = prefabBase.GetComponent<ObjectSubObjects>();
-
-                    prefabSystem.TryGetPrefab(
-                        new PrefabID("MarkerPrefab", "Car Spawn Location"),
-                        out PrefabBase carSpawnMarker
-                    );
-
-                    var subObjects = objectSubObjects.m_SubObjects.ToList();
-                    subObjects.Add(
-                        new ObjectSubObjectInfo() { m_Object = (ObjectPrefab)carSpawnMarker }
-                    );
-
-                    objectSubObjects.m_SubObjects = subObjects.ToArray();
-                    changeCount--;
-                    isUSSWHospitalSet = false;
-                    changed = true;
-                }
-                else if (active && !prefabBase.Has<ObjectSubObjects>())
-                {
-                    ObjectSubObjects objectSubObjects = prefabBase.GetComponent<ObjectSubObjects>();
-                    var subObjects = objectSubObjects.m_SubObjects.ToList();
-                    subObjects.RemoveAll(oso => oso.m_Object.name == "Car Spawn Location");
-
-                    objectSubObjects.m_SubObjects = subObjects.ToArray();
-                    changeCount++;
-                    isUSSWHospitalSet = true;
-                    changed = true;
+                    if (hospitalObj[i].m_Prefab == CarSpawnMarker)
+                    {
+                        hospitalObj.RemoveAt(i);
+                        break;
+                    }
                 }
 
-                if (changed)
-                {
-                    UpdatePrefab(prefabBase);
-                    SetState();
-                }
+                changeCount++;
+                isUSSWHospitalSet = true;
+                changed = true;
+            }
+
+            if (changed)
+            {
+                LogHelper.SendLog("USSW_Hospital fix completed", LogLevel.DEVD);
+                SetState();
             }
         }
-
-        //public void FixExtractorSpawning(bool active = true)
-        //{
-        //    if (!active && !isExtractorsDisabled)
-        //        return;
-        //    if (!active && !firstPass)
-        //    {
-        //        foreach (KeyValuePair<Entity, ObjectPrefab[]> kvp in extractorsModified)
-        //        {
-        //            Entity entity = kvp.Key;
-        //            ObjectPrefab[] objects = kvp.Value;
-
-        //            if (!prefabSystem.TryGetPrefab(entity, out PrefabBase prefabBase))
-        //            {
-        //                continue;
-        //            }
-        //            if (prefabBase.TryGet(out SpawnableObject sp))
-        //            {
-        //                sp.m_Placeholders = objects;
-        //            }
-        //            extractorsModified.Remove(entity);
-        //            prefabSystem.UpdatePrefab(prefabBase);
-        //        }
-        //        changeCount--;
-        //        isExtractorsDisabled = false;
-        //    }
-        //    else if (active && !firstPass)
-        //    {
-        //        EntityQuery spawnableQuery = SystemAPI
-        //            .QueryBuilder()
-        //            .WithAll<SpawnableObjectData>()
-        //            .WithAll<BuildingData>()
-        //            .WithAll<ExtractorFacilityData>()
-        //            .Build();
-        //        var spawnableBuildings = spawnableQuery.ToEntityArray(Allocator.Temp);
-        //        foreach (var entity in spawnableBuildings)
-        //        {
-        //            if (!prefabSystem.TryGetPrefab(entity, out PrefabBase prefabBase))
-        //            {
-        //                continue;
-        //            }
-
-        //            if (prefabBase != null)
-        //            {
-        //                if (prefabBase.TryGet(out SpawnableObject sp))
-        //                {
-        //                    if (!extractorsModified.ContainsKey(entity))
-        //                        extractorsModified.Add(entity, sp.m_Placeholders);
-
-        //                    Array.Resize(ref sp.m_Placeholders, 0);
-        //                    prefabSystem.UpdatePrefab(prefabBase);
-        //                }
-        //            }
-        //        }
-        //        changeCount++;
-        //        isExtractorsDisabled = true;
-        //    }
-        //}
 
         public void FixParkingLotSolar(bool active = true)
         {
@@ -832,73 +624,105 @@ namespace PrefabAssetFixes.Systems
             if (!active && !isSolarParkingSet)
                 return;
             if (
-                prefabSystem.TryGetPrefab(
-                    new PrefabID("BuildingPrefab", "ParkingLot12"),
-                    out PrefabBase prefabBase
+                PrefabHelper.TryGetEntity(
+                    new PrefabID(nameof(BuildingPrefab), "ParkingLot12"),
+                    out Entity ParkingLot12Entity
                 )
-                && prefabSystem.TryGetPrefab(
-                    new PrefabID("BuildingPrefab", "ParkingLot13"),
-                    out PrefabBase prefabBase2
+                && PrefabHelper.TryGetEntity(
+                    new PrefabID(nameof(BuildingPrefab), "ParkingLot13"),
+                    out Entity ParkingLot13Entity
+                )
+                && PrefabHelper.TryGetEntity(
+                    new PrefabID("PowerLinePrefab", "Low-voltage Marker"),
+                    out Entity powerLineEntity
                 )
             )
             {
                 bool changed = false;
+
                 if (!active && !firstPass)
                 {
-                    if (prefabBase.Has<SolarPowered>() && prefabBase.Has<PowerPlant>())
+                    EntityManager.RemoveComponent<SolarPoweredData>(ParkingLot12Entity);
+                    EntityManager.RemoveComponent<SolarPoweredData>(ParkingLot13Entity);
+                    EntityManager.RemoveComponent<PowerPlantData>(ParkingLot12Entity);
+                    EntityManager.RemoveComponent<PowerPlantData>(ParkingLot13Entity);
+
+                    if (
+                        EntityManager.TryGetBuffer(
+                            ParkingLot12Entity,
+                            false,
+                            out DynamicBuffer<SubNet> osni1
+                        )
+                    )
                     {
-                        prefabBase.Remove<SolarPowered>();
-                        prefabBase.Remove<PowerPlant>();
+                        for (int i = osni1.Length - 1; i >= 0; i--)
+                        {
+                            if (osni1[i].m_Prefab == powerLineEntity)
+                            {
+                                osni1.RemoveAt(i);
+                                break;
+                            }
+                        }
                     }
-                    if (prefabBase2.Has<SolarPowered>() && prefabBase2.Has<PowerPlant>())
+
+                    if (
+                        EntityManager.TryGetBuffer(
+                            ParkingLot13Entity,
+                            false,
+                            out DynamicBuffer<SubNet> osni2
+                        )
+                    )
                     {
-                        prefabBase2.Remove<SolarPowered>();
-                        prefabBase2.Remove<PowerPlant>();
+                        for (int i = osni2.Length - 1; i >= 0; i--)
+                        {
+                            if (osni2[i].m_Prefab == powerLineEntity)
+                            {
+                                osni2.RemoveAt(i);
+                                break;
+                            }
+                        }
                     }
+
                     changeCount--;
                     isSolarParkingSet = false;
                     changed = true;
                 }
-                else if (
-                    active
-                    && prefabSystem.TryGetPrefab(
-                        new PrefabID("PowerLinePrefab", "Low-voltage Marker"),
-                        out PrefabBase powerLine
-                    )
-                )
+                else if (active)
                 {
                     float3 f3 = new(0, 0, 12);
-                    ObjectSubNetInfo marker = new()
+                    SubNet marker = new()
                     {
-                        m_NetPrefab = (NetPrefab)powerLine,
-                        m_BezierCurve = new Colossal.Mathematics.Bezier4x3(f3, f3, f3, f3),
+                        m_Prefab = powerLineEntity,
+                        m_Curve = new Colossal.Mathematics.Bezier4x3(f3, f3, f3, f3),
                         m_NodeIndex = new int2(999, 999),
                         m_ParentMesh = new int2(-1, -1),
+                        m_Snapping = new bool2(true, false),
                     };
 
-                    SolarPowered sp = prefabBase.AddOrGetComponent<SolarPowered>();
-                    sp.m_Production = 2500;
+                    SolarPoweredData solarPoweredData1 = new() { m_Production = 2500 };
+                    SolarPoweredData solarPoweredData2 = new() { m_Production = 7500 };
 
-                    PowerPlant pp = prefabBase.AddOrGetComponent<PowerPlant>();
-                    pp.m_ElectricityProduction = 0;
+                    EntityManager.AddComponentData(ParkingLot12Entity, solarPoweredData1);
+                    EntityManager.AddComponent<PowerPlantData>(ParkingLot12Entity);
+                    if (
+                        EntityManager.TryGetBuffer(
+                            ParkingLot12Entity,
+                            false,
+                            out DynamicBuffer<SubNet> osni1
+                        )
+                    )
+                        osni1.Add(marker);
 
-                    ObjectSubNets osn = prefabBase.AddOrGetComponent<ObjectSubNets>();
-                    List<ObjectSubNetInfo> osni = osn.m_SubNets.ToList();
-                    osni.Add(marker);
-
-                    osn.m_SubNets = osni.ToArray();
-
-                    SolarPowered sp2 = prefabBase2.AddOrGetComponent<SolarPowered>();
-                    sp2.m_Production = 7500;
-
-                    PowerPlant pp2 = prefabBase2.AddOrGetComponent<PowerPlant>();
-                    pp2.m_ElectricityProduction = 0;
-
-                    ObjectSubNets osn2 = prefabBase2.AddOrGetComponent<ObjectSubNets>();
-                    List<ObjectSubNetInfo> osni2 = osn2.m_SubNets.ToList();
-                    osni2.Add(marker);
-
-                    osn2.m_SubNets = osni2.ToArray();
+                    EntityManager.AddComponentData(ParkingLot13Entity, solarPoweredData2);
+                    EntityManager.AddComponent<PowerPlantData>(ParkingLot13Entity);
+                    if (
+                        EntityManager.TryGetBuffer(
+                            ParkingLot13Entity,
+                            false,
+                            out DynamicBuffer<SubNet> osni2
+                        )
+                    )
+                        osni2.Add(marker);
 
                     changeCount++;
                     isSolarParkingSet = true;
@@ -907,8 +731,7 @@ namespace PrefabAssetFixes.Systems
 
                 if (changed)
                 {
-                    UpdatePrefab(prefabBase);
-                    UpdatePrefab(prefabBase2);
+                    LogHelper.SendLog("ParkingLot12 & ParkingLot13 fix completed", LogLevel.DEVD);
                     SetState();
                 }
             }
@@ -923,25 +746,34 @@ namespace PrefabAssetFixes.Systems
             if (!active && !isRSClinicSet)
                 return;
 
-            prefabSystem.TryGetPrefab(
-                new PrefabID("BuildingPrefab", "RS_MedicalClinic01"),
-                out PrefabBase prefabBase1
-            );
-            prefabSystem.TryGetPrefab(
-                new PrefabID("BuildingPrefab", "RS_MedicalClinic01_Sub01"),
-                out PrefabBase prefabBase2
-            );
+            if (
+                !PrefabHelper.TryGetEntity(
+                    new PrefabID(nameof(BuildingPrefab), "RS_MedicalClinic01"),
+                    out Entity RS_MedicalClinic01Entity
+                )
+                || !PrefabHelper.TryGetEntity(
+                    new PrefabID(nameof(BuildingPrefab), "RS_MedicalClinic01_Sub01"),
+                    out Entity RS_MedicalClinic01_Sub01Entity
+                )
+            )
+                return;
 
             if (
-                prefabBase1.TryGet(out StorageLimit storage1)
-                && prefabBase2.TryGet(out StorageLimit storage2)
+                EntityManager.TryGetComponent(
+                    RS_MedicalClinic01Entity,
+                    out StorageLimitData storage1
+                )
+                && EntityManager.TryGetComponent(
+                    RS_MedicalClinic01_Sub01Entity,
+                    out StorageLimitData storage2
+                )
             )
             {
                 bool changed = false;
                 if (!active && !firstPass)
                 {
-                    storage1.storageLimit = 100;
-                    storage2.storageLimit = 100;
+                    storage1.m_Limit = 100;
+                    storage2.m_Limit = 100;
 
                     changeCount--;
                     isRSClinicSet = false;
@@ -949,8 +781,8 @@ namespace PrefabAssetFixes.Systems
                 }
                 else if (active)
                 {
-                    storage1.storageLimit = 1000;
-                    storage2.storageLimit = 1000;
+                    storage1.m_Limit = 1000;
+                    storage2.m_Limit = 1000;
 
                     changeCount++;
                     isRSClinicSet = true;
@@ -958,8 +790,12 @@ namespace PrefabAssetFixes.Systems
                 }
                 if (changed)
                 {
-                    UpdatePrefab(prefabBase1);
-                    UpdatePrefab(prefabBase2);
+                    EntityManager.SetComponentData(RS_MedicalClinic01Entity, storage1);
+                    EntityManager.SetComponentData(RS_MedicalClinic01_Sub01Entity, storage2);
+                    LogHelper.SendLog(
+                        "RS_MedicalClinic01 & RS_MedicalClinic01_Sub01 fix completed",
+                        LogLevel.DEVD
+                    );
                     SetState();
                 }
             }
@@ -968,28 +804,77 @@ namespace PrefabAssetFixes.Systems
         public bool AddOn_FixSubNetDirection(string prefabName, bool active)
         {
             if (
-                prefabSystem.TryGetPrefab(
+                !PrefabHelper.TryGetEntity(
                     new PrefabID("BuildingPrefab", prefabName),
-                    out PrefabBase prefabBase
-                ) && prefabBase.TryGet(out ObjectSubNets subNets)
+                    out Entity prefabEntity
+                )
+                || !EntityManager.TryGetBuffer(
+                    prefabEntity,
+                    false,
+                    out DynamicBuffer<Game.Prefabs.SubNet> subNets
+                )
             )
+                return false;
+            for (int i = subNets.Length - 1; i >= 0; i--)
             {
+                var subNet = subNets[i];
+
                 if (prefabName == "BusStation01")
                 {
-                    subNets.m_InvertWhen = active
+                    subNet.m_InvertMode = active
                         ? NetInvertMode.RighthandTraffic
                         : NetInvertMode.Never;
                 }
                 else
                 {
-                    subNets.m_InvertWhen = active
+                    subNet.m_InvertMode = active
                         ? NetInvertMode.LefthandTraffic
                         : NetInvertMode.Never;
                 }
-                UpdatePrefab(prefabBase);
-                return true;
+                subNets[i] = subNet;
             }
-            return false;
+
+            if (
+                prefabName == "BusStation01"
+                && EntityManager.TryGetBuffer(
+                    prefabEntity,
+                    false,
+                    out DynamicBuffer<Game.Prefabs.SubObject> subObjects
+                )
+                && PrefabHelper.TryGetEntity(
+                    new PrefabID(nameof(StaticObjectPrefab), "SlowDownTextDecal01"),
+                    out Entity SlowDownDecal01Entity
+                )
+                && PrefabHelper.TryGetEntity(
+                    new PrefabID(
+                        nameof(StaticObjectPrefab),
+                        "RoadArrow Forward Right90 Placeholder"
+                    ),
+                    out Entity RoadArrowForwardRight90PlaceholderEntity
+                )
+            )
+            {
+                for (int i = subObjects.Length - 1; i >= 0; i--)
+                {
+                    var subObject = subObjects[i];
+
+                    if (
+                        subObject.m_Prefab == SlowDownDecal01Entity
+                        || subObject.m_Prefab == RoadArrowForwardRight90PlaceholderEntity
+                    )
+                    {
+                        subObject.m_Rotation = math.mul(
+                            subObject.m_Rotation,
+                            quaternion.RotateY(math.radians(180))
+                        );
+
+                        subObjects[i] = subObject;
+                    }
+                }
+            }
+
+            LogHelper.SendLog($"{prefabName} fix completed", LogLevel.DEVD);
+            return true;
         }
 
         public void FixLHTBusStation02(bool active = true)
@@ -1101,61 +986,58 @@ namespace PrefabAssetFixes.Systems
             if (!active && !isNLLowHouseholdSet)
                 return;
             if (
-                prefabSystem.TryGetPrefab(
+                !PrefabHelper.TryGetEntity(
                     new PrefabID("ZonePrefab", "NL Residential Gambrel Low"),
-                    out PrefabBase prefabBase1
+                    out Entity zoneEntity1
                 )
-                && prefabBase1.TryGet(out ZoneProperties zoneProps1)
-                && prefabSystem.TryGetPrefab(
+                || !EntityManager.TryGetComponent(zoneEntity1, out ZonePropertiesData zoneProps1)
+                || !PrefabHelper.TryGetEntity(
                     new PrefabID("ZonePrefab", "NL Residential Gable Low"),
-                    out PrefabBase prefabBase2
+                    out Entity zoneEntity2
                 )
-                && prefabBase2.TryGet(out ZoneProperties zoneProps2)
+                || !EntityManager.TryGetComponent(zoneEntity2, out ZonePropertiesData zoneProps2)
             )
+                return;
+
+            bool changed = false;
+            if (!active && !firstPass)
             {
-                bool changed = false;
-                if (!active && !firstPass)
+                changeCount--;
+                isNLLowHouseholdSet = false;
+                changed = true;
+            }
+            else if (active)
+            {
+                changeCount++;
+                isNLLowHouseholdSet = true;
+                changed = true;
+            }
+            if (changed)
+            {
+                EntityQuery zoneBuildingsEntity = SystemAPI
+                    .QueryBuilder()
+                    .WithAll<SpawnableBuildingData>()
+                    .Build();
+                var zoneBuildings = zoneBuildingsEntity.ToEntityArray(Allocator.Temp);
+                zoneProps1.m_ResidentialProperties = active ? 2 : 1;
+                zoneProps2.m_ResidentialProperties = active ? 2 : 1;
+                EntityManager.SetComponentData(zoneEntity1, zoneProps1);
+                EntityManager.SetComponentData(zoneEntity2, zoneProps2);
+                foreach (var building in zoneBuildings)
                 {
-                    zoneProps1.m_ResidentialProperties = 1;
-                    zoneProps2.m_ResidentialProperties = 1;
-                    changeCount--;
-                    isNLLowHouseholdSet = false;
-                    changed = true;
-                }
-                else if (active)
-                {
-                    zoneProps1.m_ResidentialProperties = 2;
-                    zoneProps2.m_ResidentialProperties = 2;
-                    changeCount++;
-                    isNLLowHouseholdSet = true;
-                    changed = true;
-                }
-                if (changed)
-                {
-                    UpdatePrefab(prefabBase1);
-                    prefabSystem.TryGetEntity(prefabBase1, out Entity zoneEntity1);
-                    prefabSystem.TryGetEntity(prefabBase2, out Entity zoneEntity2);
-                    EntityQuery zoneBuildingsEntity = SystemAPI
-                        .QueryBuilder()
-                        .WithAll<SpawnableBuildingData>()
-                        .Build();
-                    var zoneBuildings = zoneBuildingsEntity.ToEntityArray(Allocator.Temp);
-                    foreach (var building in zoneBuildings)
+                    if (
+                        EntityManager.TryGetComponent(building, out SpawnableBuildingData sbd)
+                        && (sbd.m_ZonePrefab == zoneEntity1 || sbd.m_ZonePrefab == zoneEntity2)
+                    )
                     {
-                        if (
-                            EntityManager.TryGetComponent(building, out SpawnableBuildingData sbd)
-                            && (sbd.m_ZonePrefab == zoneEntity1 || sbd.m_ZonePrefab == zoneEntity2)
-                        )
-                        {
-                            EntityManager.TryGetComponent(building, out PrefabData prefabData);
-                            prefabSystem.TryGetPrefab(prefabData, out PrefabBase pb);
-
-                            UpdatePrefab(pb);
-                        }
+                        EntityManager.TryGetComponent(building, out BuildingPropertyData bpd);
+                        bpd.m_ResidentialProperties = active ? 2 : 1;
+                        EntityManager.SetComponentData(building, bpd);
                     }
-
-                    SetState();
                 }
+
+                LogHelper.SendLog($"NL Zone fix completed", LogLevel.DEVD);
+                SetState();
             }
         }
 
@@ -1166,24 +1048,21 @@ namespace PrefabAssetFixes.Systems
             if (!active && !isAdditionalTransformersSet)
                 return;
             if (
-                prefabSystem.TryGetPrefab(
+                PrefabHelper.TryGetEntity(
                     new PrefabID(
-                        "BuildingPrefab",
+                        nameof(BuildingPrefab),
                         "SolarPowerStation01 Additional Transformer Station"
                     ),
-                    out PrefabBase additionalTransformer
+                    out Entity additionalTransformerEntity
                 )
-                && additionalTransformer.Has<ServiceUpgrade>()
-                && prefabSystem.TryGetPrefab(
-                    new PrefabID("BuildingPrefab", "SolarPowerStation01"),
-                    out PrefabBase solarPowerStation
+                && EntityManager.TryGetBuffer(
+                    additionalTransformerEntity,
+                    false,
+                    out DynamicBuffer<ServiceUpgradeBuilding> serviceUpgradeBuilding
                 )
             )
             {
                 bool changed = false;
-
-                ServiceUpgrade su = additionalTransformer.GetComponent<ServiceUpgrade>();
-                List<BuildingPrefab> bps = new() { (BuildingPrefab)solarPowerStation };
 
                 List<string> buildings = new()
                 {
@@ -1193,6 +1072,44 @@ namespace PrefabAssetFixes.Systems
 
                 if (!active && !firstPass)
                 {
+                    for (int i = 0; i < buildings.Count; i++)
+                    {
+                        if (
+                            !PrefabHelper.TryGetEntity(
+                                new PrefabID(nameof(BuildingPrefab), buildings[i]),
+                                out Entity powerBuildingEntity
+                            ) || !EntityManager.HasComponent<PowerPlantData>(powerBuildingEntity)
+                        )
+                            continue;
+
+                        if (!EntityManager.HasBuffer<BuildingUpgradeElement>(powerBuildingEntity))
+                            EntityManager.AddBuffer<BuildingUpgradeElement>(powerBuildingEntity);
+
+                        var buildingUpgradeElement =
+                            EntityManager.GetBuffer<BuildingUpgradeElement>(
+                                powerBuildingEntity,
+                                false
+                            );
+
+                        for (int j = buildingUpgradeElement.Length - 1; j >= 0; j--)
+                        {
+                            if (buildingUpgradeElement[j].m_Upgrade == additionalTransformerEntity)
+                            {
+                                buildingUpgradeElement.RemoveAt(j);
+                                break;
+                            }
+                        }
+
+                        for (int j = serviceUpgradeBuilding.Length - 1; j >= 0; j--)
+                        {
+                            if (serviceUpgradeBuilding[j].m_Building == powerBuildingEntity)
+                            {
+                                serviceUpgradeBuilding.RemoveAt(j);
+                                break;
+                            }
+                        }
+                    }
+
                     changeCount--;
                     isAdditionalTransformersSet = false;
                     changed = true;
@@ -1202,12 +1119,28 @@ namespace PrefabAssetFixes.Systems
                     for (int i = 0; i < buildings.Count; i++)
                     {
                         if (
-                            prefabSystem.TryGetPrefab(
-                                new PrefabID("BuildingPrefab", buildings[i]),
-                                out PrefabBase powerPrefab
-                            ) && powerPrefab.Has<PowerPlant>()
+                            !PrefabHelper.TryGetEntity(
+                                new PrefabID(nameof(BuildingPrefab), buildings[i]),
+                                out Entity powerBuildingEntity
+                            ) || !EntityManager.HasComponent<PowerPlantData>(powerBuildingEntity)
                         )
-                            bps.Add((BuildingPrefab)powerPrefab);
+                            continue;
+
+                        if (!EntityManager.HasBuffer<BuildingUpgradeElement>(powerBuildingEntity))
+                            EntityManager.AddBuffer<BuildingUpgradeElement>(powerBuildingEntity);
+
+                        var buildingUpgradeElement =
+                            EntityManager.GetBuffer<BuildingUpgradeElement>(
+                                powerBuildingEntity,
+                                false
+                            );
+
+                        buildingUpgradeElement.Add(
+                            new BuildingUpgradeElement() { m_Upgrade = additionalTransformerEntity }
+                        );
+                        serviceUpgradeBuilding.Add(
+                            new ServiceUpgradeBuilding() { m_Building = powerBuildingEntity }
+                        );
                     }
 
                     changeCount++;
@@ -1216,17 +1149,133 @@ namespace PrefabAssetFixes.Systems
                 }
                 if (changed)
                 {
-                    su.m_Buildings = bps.ToArray();
-
-                    foreach (var building in bps)
-                    {
-                        building.AddUpgrade(EntityManager, su);
-                        //UpdatePrefab(building);
-                    }
-                    UpdatePrefab(additionalTransformer);
-
+                    LogHelper.SendLog($"Additional transformer fix completed", LogLevel.DEVD);
                     SetState();
                 }
+            }
+        }
+
+        public void FixFRCityHall(bool active = true)
+        {
+            if (!systemReady)
+                return;
+            if (!IsActive(PackType.RP_FR))
+                return;
+            if (!active && !isFRCityHallSet)
+                return;
+            bool changed = false;
+
+            if (
+                !(
+                    PrefabHelper.TryGetEntity(
+                        new PrefabID(nameof(BuildingPrefab), "CityHall01"),
+                        out Entity cityHallEntity
+                    )
+                    && EntityManager.TryGetBuffer(
+                        cityHallEntity,
+                        false,
+                        out DynamicBuffer<UnlockOnBuildData> uob0
+                    )
+                    && PrefabHelper.TryGetEntity(
+                        new PrefabID(nameof(BuildingPrefab), "FR_CityHall01"),
+                        out Entity frCityHallEntity
+                    )
+                )
+            )
+                return;
+            if (
+                !(
+                    PrefabHelper.TryGetEntity(
+                        new PrefabID(nameof(BuildingExtensionPrefab), "CityHall01 Court"),
+                        out Entity cityHallUp1Entity
+                    )
+                    && EntityManager.TryGetBuffer(
+                        cityHallUp1Entity,
+                        false,
+                        out DynamicBuffer<UnlockOnBuildData> uob1
+                    )
+                    && PrefabHelper.TryGetEntity(
+                        new PrefabID(nameof(BuildingExtensionPrefab), "FR_CityHall01_Ext01"),
+                        out Entity frCityHallUp1Entity
+                    )
+                )
+            )
+                return;
+            if (
+                !(
+                    PrefabHelper.TryGetEntity(
+                        new PrefabID(
+                            nameof(BuildingExtensionPrefab),
+                            "CityHall01 Planning Offices"
+                        ),
+                        out Entity cityHallUp2Entity
+                    )
+                    && EntityManager.TryGetBuffer(
+                        cityHallUp2Entity,
+                        false,
+                        out DynamicBuffer<UnlockOnBuildData> uob2
+                    )
+                    && PrefabHelper.TryGetEntity(
+                        new PrefabID(nameof(BuildingExtensionPrefab), "FR_CityHall01_Ext02"),
+                        out Entity frCityHallUp2Entity
+                    )
+                )
+            )
+                return;
+
+            if (!active && !firstPass)
+            {
+                if (
+                    !(
+                        EntityManager.HasBuffer<UnlockOnBuildData>(frCityHallEntity)
+                        || EntityManager.HasBuffer<UnlockOnBuildData>(frCityHallUp1Entity)
+                        || EntityManager.HasBuffer<UnlockOnBuildData>(frCityHallUp2Entity)
+                    )
+                )
+                    return;
+                EntityManager.RemoveComponent<UnlockOnBuildData>(frCityHallEntity);
+                EntityManager.RemoveComponent<UnlockOnBuildData>(frCityHallUp1Entity);
+                EntityManager.RemoveComponent<UnlockOnBuildData>(frCityHallUp2Entity);
+                changed = true;
+                LogHelper.SendLog($"FR City Hall unlocks removal completed", LogLevel.DEVD);
+            }
+            else if (active)
+            {
+                DynamicBuffer<UnlockOnBuildData> uobNew = default;
+                if (!EntityManager.HasBuffer<UnlockOnBuildData>(frCityHallEntity))
+                    uobNew = EntityManager.AddBuffer<UnlockOnBuildData>(frCityHallEntity);
+
+                for (int i = 0; i < uob0.Length; i++)
+                {
+                    uobNew.Add(uob0[i]);
+                }
+
+                DynamicBuffer<UnlockOnBuildData> uobNew1 = default;
+                if (!EntityManager.HasBuffer<UnlockOnBuildData>(frCityHallUp1Entity))
+                    uobNew1 = EntityManager.AddBuffer<UnlockOnBuildData>(frCityHallUp1Entity);
+
+                for (int i = 0; i < uob1.Length; i++)
+                {
+                    uobNew1.Add(uob1[i]);
+                }
+
+                DynamicBuffer<UnlockOnBuildData> uobNew2 = default;
+                if (!EntityManager.HasBuffer<UnlockOnBuildData>(frCityHallUp2Entity))
+                    uobNew2 = EntityManager.AddBuffer<UnlockOnBuildData>(frCityHallUp2Entity);
+
+                for (int i = 0; i < uob2.Length; i++)
+                {
+                    uobNew2.Add(uob2[i]);
+                }
+                changed = true;
+                LogHelper.SendLog($"FR City Hall unlocks fix completed", LogLevel.DEVD);
+            }
+
+            if (changed)
+            {
+                changeCount += active ? 1 : -1;
+                isFRCityHallSet = active;
+                SetState();
             }
         }
     }
