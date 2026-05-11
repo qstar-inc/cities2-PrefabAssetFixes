@@ -284,7 +284,7 @@ namespace PrefabAssetFixes
             NLLowHousehold = true;
             AdditionalTransformers = true;
             FRCiltyHall = true;
-            IndustrialCompanyWorker = 20;
+            IndustrialCompanyWorker = 1;
         }
 
         [Exclude]

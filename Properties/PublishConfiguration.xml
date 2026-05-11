@@ -35,12 +35,11 @@ If you have more suggestion of fixes to be added, be sure to find me and inform 
   <Screenshot Value="Properties/Screenshot04.png" />
   <Tag Value="Code Mod" />
   <ForumLink Value="" />
-  <ModVersion Value="1.2.8" />
+  <ModVersion Value="1.2.9" />
   <GameVersion Value="1.5*" />
   <Dependency Id="" />
   <RequiredDLC Value="" />
-  <ChangeLog>- Disable 'Solar Panel Parkings' Electricity Production' temporarily, as it has been reported to break saves.
-- Add option to boost industrial company employee per tiles.</ChangeLog>
+  <ChangeLog>- Set industrial company employee per tiles default to 1x (vanilla value).</ChangeLog>
   <ExternalLink Type="buymeacoffee" Url="https://buymeacoffee.com/starq" />
   <ExternalLink Type="discord" Url="https://discord.gg/U2PSjUzUuF" />
   <ExternalLink Type="github" Url="https://github.com/qstar-inc/cities2-PrefabAssetFixes" />
