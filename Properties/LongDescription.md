@@ -1,8 +1,4 @@
-<Publish>
-  <ModId Value="113708" />
-  <DisplayName Value="Prefab Asset Fixes" />
-  <ShortDescription Value="Temporary solution for fixing simple fixes with assets, whether vanilla or custom" />
-  <LongDescription># Prefab Asset Fixes
+# Prefab Asset Fixes
 This mod makes simple fixes that prevents some assets from functioning or just to make it look good.
 
 ## Current Fixes:
@@ -27,22 +23,4 @@ This mod makes simple fixes that prevents some assets from functioning or just t
 
 Assets that requires subobject/sublane modification requires the asset to be replopped or reset it's objects using Better Bulldozer.
 
-If you have more suggestion of fixes to be added, be sure to find me and inform me.</LongDescription>
-  <Thumbnail Value="Properties/Thumbnail.png" />
-  <Screenshot Value="Properties/Screenshot01.png" />
-  <Screenshot Value="Properties/Screenshot02.png" />
-  <Screenshot Value="Properties/Screenshot03.png" />
-  <Screenshot Value="Properties/Screenshot04.png" />
-  <Tag Value="Code Mod" />
-  <ForumLink Value="" />
-  <ModVersion Value="1.2.8" />
-  <GameVersion Value="1.5*" />
-  <Dependency Id="" />
-  <RequiredDLC Value="" />
-  <ChangeLog>- Disable 'Solar Panel Parkings' Electricity Production' temporarily, as it has been reported to break saves.
-- Add option to boost industrial company employee per tiles.</ChangeLog>
-  <ExternalLink Type="buymeacoffee" Url="https://buymeacoffee.com/starq" />
-  <ExternalLink Type="discord" Url="https://discord.gg/U2PSjUzUuF" />
-  <ExternalLink Type="github" Url="https://github.com/qstar-inc/cities2-PrefabAssetFixes" />
-  <ExternalLink Type="crowdin" Url="https://crowdin.com/project/starq-cities2" />
-</Publish>
+If you have more suggestion of fixes to be added, be sure to find me and inform me.

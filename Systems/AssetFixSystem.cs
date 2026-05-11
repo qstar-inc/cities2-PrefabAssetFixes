@@ -1,14 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using Colossal;
 using Colossal.Entities;
+using Colossal.IO.AssetDatabase;
+using Colossal.Reflection;
 using Colossal.Serialization.Entities;
+using Colossal.UI;
 using Game;
+using Game.Assets;
+using Game.Common;
 using Game.Companies;
 using Game.Prefabs;
+using Game.SceneFlow;
+using Game.Settings;
+using Game.Tools;
+using Game.UI;
+using Game.UI.InGame;
+using Game.UI.Localization;
+using Game.UI.Menu;
 using StarQ.Shared.Extensions;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace PrefabAssetFixes.Systems
 {
@@ -50,6 +67,7 @@ namespace PrefabAssetFixes.Systems
         private bool isNLLowHouseholdSet = false;
         private bool isFRCityHallSet = false;
         private bool isAdditionalTransformersSet = false;
+        private bool isIndustrialCompanyWorkerUpdated = false;
 
         private bool hasRP_FR;
         private bool hasRP_CN;
@@ -80,6 +98,7 @@ namespace PrefabAssetFixes.Systems
             prefabSystem = WorldHelper.PrefabSystem;
             ModHelper.AddAfterActivePlaysetOrModStatusChanged(CheckCount);
             CheckCount();
+            Enabled = true;
         }
 
         public bool IsActive(PackType packType)
@@ -97,13 +116,17 @@ namespace PrefabAssetFixes.Systems
 
         private void CheckCount()
         {
-            totalCount = 11;
+            totalCount = 12;
             // prison + prison van + recycling + hospital + solar parking +
             // lht bus station 2 + lht taxi depot + lht tram depot +
-            // lht cargo harbor + rht bus station 1 + additional transformers
+            // lht cargo harbor + rht bus station 1 + additional transformers +
+            // ind company worker
 
             totalCount -= 2;
             // prison van + recycling
+
+            totalCount -= 1;
+            // solar parking
 
             if (
                 prefabSystem.TryGetPrefab(
@@ -197,6 +220,7 @@ namespace PrefabAssetFixes.Systems
 
         protected override void OnGameLoadingComplete(Purpose purpose, GameMode mode)
         {
+            Enabled = true;
             base.OnGameLoadingComplete(purpose, mode);
             if (firstPass)
                 CheckCount();
@@ -217,7 +241,7 @@ namespace PrefabAssetFixes.Systems
                 FixHostipal01(false);
                 FixHoveringPoles(false);
                 FixUSSWHospital(false);
-                FixParkingLotSolar(false);
+                //FixParkingLotSolar(false);
                 FixRSClinic(false);
                 FixLHTBusStation02(false);
                 FixLHTTaxiDepot01(false);
@@ -227,6 +251,7 @@ namespace PrefabAssetFixes.Systems
                 FixNLLowHousehold(false);
                 FixAdditionalTransformers(false);
                 FixFRCityHall(false);
+                UpdateIndustrialWorker(false, 1);
             }
             if (mode != GameMode.Game)
                 return;
@@ -251,8 +276,8 @@ namespace PrefabAssetFixes.Systems
                 FixHoveringPoles();
             if (settings.USSWHospital && IsActive(PackType.RP_USSW))
                 FixUSSWHospital();
-            if (settings.SolarParking)
-                FixParkingLotSolar();
+            //if (settings.SolarParking)
+            //    FixParkingLotSolar();
             if (settings.RSClinic && IsActive(PackType.DLC_MA))
                 FixRSClinic();
             if (settings.LHTBusStation02)
@@ -271,9 +296,15 @@ namespace PrefabAssetFixes.Systems
                 FixAdditionalTransformers();
             if (settings.FRCiltyHall && IsActive(PackType.RP_FR))
                 FixFRCityHall();
+            if (settings.IndustrialCompanyWorker != 1)
+                UpdateIndustrialWorker(true, settings.IndustrialCompanyWorker);
         }
 
-        protected override void OnUpdate() { }
+        protected override void OnUpdate()
+        {
+            FixSaveFromSolar();
+            Enabled = false;
+        }
 
         public static void SetState()
         {
@@ -619,122 +650,123 @@ namespace PrefabAssetFixes.Systems
 
         public void FixParkingLotSolar(bool active = true)
         {
-            if (!systemReady)
-                return;
-            if (!active && !isSolarParkingSet)
-                return;
-            if (
-                PrefabHelper.TryGetEntity(
-                    new PrefabID(nameof(BuildingPrefab), "ParkingLot12"),
-                    out Entity ParkingLot12Entity
-                )
-                && PrefabHelper.TryGetEntity(
-                    new PrefabID(nameof(BuildingPrefab), "ParkingLot13"),
-                    out Entity ParkingLot13Entity
-                )
-                && PrefabHelper.TryGetEntity(
-                    new PrefabID("PowerLinePrefab", "Low-voltage Marker"),
-                    out Entity powerLineEntity
-                )
-            )
-            {
-                bool changed = false;
+            return;
+            //if (!systemReady)
+            //    return;
+            //if (!active && !isSolarParkingSet)
+            //    return;
+            //if (
+            //    PrefabHelper.TryGetEntity(
+            //        new PrefabID(nameof(BuildingPrefab), "ParkingLot12"),
+            //        out Entity ParkingLot12Entity
+            //    )
+            //    && PrefabHelper.TryGetEntity(
+            //        new PrefabID(nameof(BuildingPrefab), "ParkingLot13"),
+            //        out Entity ParkingLot13Entity
+            //    )
+            //    && PrefabHelper.TryGetEntity(
+            //        new PrefabID("PowerLinePrefab", "Low-voltage Marker"),
+            //        out Entity powerLineEntity
+            //    )
+            //)
+            //{
+            //    bool changed = false;
 
-                if (!active && !firstPass)
-                {
-                    EntityManager.RemoveComponent<SolarPoweredData>(ParkingLot12Entity);
-                    EntityManager.RemoveComponent<SolarPoweredData>(ParkingLot13Entity);
-                    EntityManager.RemoveComponent<PowerPlantData>(ParkingLot12Entity);
-                    EntityManager.RemoveComponent<PowerPlantData>(ParkingLot13Entity);
+            //    if (!active && !firstPass)
+            //    {
+            //        EntityManager.RemoveComponent<SolarPoweredData>(ParkingLot12Entity);
+            //        EntityManager.RemoveComponent<SolarPoweredData>(ParkingLot13Entity);
+            //        EntityManager.RemoveComponent<PowerPlantData>(ParkingLot12Entity);
+            //        EntityManager.RemoveComponent<PowerPlantData>(ParkingLot13Entity);
 
-                    if (
-                        EntityManager.TryGetBuffer(
-                            ParkingLot12Entity,
-                            false,
-                            out DynamicBuffer<SubNet> osni1
-                        )
-                    )
-                    {
-                        for (int i = osni1.Length - 1; i >= 0; i--)
-                        {
-                            if (osni1[i].m_Prefab == powerLineEntity)
-                            {
-                                osni1.RemoveAt(i);
-                                break;
-                            }
-                        }
-                    }
+            //        if (
+            //            EntityManager.TryGetBuffer(
+            //                ParkingLot12Entity,
+            //                false,
+            //                out DynamicBuffer<SubNet> osni1
+            //            )
+            //        )
+            //        {
+            //            for (int i = osni1.Length - 1; i >= 0; i--)
+            //            {
+            //                if (osni1[i].m_Prefab == powerLineEntity)
+            //                {
+            //                    osni1.RemoveAt(i);
+            //                    break;
+            //                }
+            //            }
+            //        }
 
-                    if (
-                        EntityManager.TryGetBuffer(
-                            ParkingLot13Entity,
-                            false,
-                            out DynamicBuffer<SubNet> osni2
-                        )
-                    )
-                    {
-                        for (int i = osni2.Length - 1; i >= 0; i--)
-                        {
-                            if (osni2[i].m_Prefab == powerLineEntity)
-                            {
-                                osni2.RemoveAt(i);
-                                break;
-                            }
-                        }
-                    }
+            //        if (
+            //            EntityManager.TryGetBuffer(
+            //                ParkingLot13Entity,
+            //                false,
+            //                out DynamicBuffer<SubNet> osni2
+            //            )
+            //        )
+            //        {
+            //            for (int i = osni2.Length - 1; i >= 0; i--)
+            //            {
+            //                if (osni2[i].m_Prefab == powerLineEntity)
+            //                {
+            //                    osni2.RemoveAt(i);
+            //                    break;
+            //                }
+            //            }
+            //        }
 
-                    changeCount--;
-                    isSolarParkingSet = false;
-                    changed = true;
-                }
-                else if (active)
-                {
-                    float3 f3 = new(0, 0, 12);
-                    SubNet marker = new()
-                    {
-                        m_Prefab = powerLineEntity,
-                        m_Curve = new Colossal.Mathematics.Bezier4x3(f3, f3, f3, f3),
-                        m_NodeIndex = new int2(999, 999),
-                        m_ParentMesh = new int2(-1, -1),
-                        m_Snapping = new bool2(true, false),
-                    };
+            //        changeCount--;
+            //        isSolarParkingSet = false;
+            //        changed = true;
+            //    }
+            //    else if (active)
+            //    {
+            //        float3 f3 = new(0, 0, 12);
+            //        SubNet marker = new()
+            //        {
+            //            m_Prefab = powerLineEntity,
+            //            m_Curve = new Colossal.Mathematics.Bezier4x3(f3, f3, f3, f3),
+            //            m_NodeIndex = new int2(999, 999),
+            //            m_ParentMesh = new int2(-1, -1),
+            //            m_Snapping = new bool2(true, false),
+            //        };
 
-                    SolarPoweredData solarPoweredData1 = new() { m_Production = 2500 };
-                    SolarPoweredData solarPoweredData2 = new() { m_Production = 7500 };
+            //        SolarPoweredData solarPoweredData1 = new() { m_Production = 2500 };
+            //        SolarPoweredData solarPoweredData2 = new() { m_Production = 7500 };
 
-                    EntityManager.AddComponentData(ParkingLot12Entity, solarPoweredData1);
-                    EntityManager.AddComponent<PowerPlantData>(ParkingLot12Entity);
-                    if (
-                        EntityManager.TryGetBuffer(
-                            ParkingLot12Entity,
-                            false,
-                            out DynamicBuffer<SubNet> osni1
-                        )
-                    )
-                        osni1.Add(marker);
+            //        EntityManager.AddComponentData(ParkingLot12Entity, solarPoweredData1);
+            //        EntityManager.AddComponent<PowerPlantData>(ParkingLot12Entity);
+            //        if (
+            //            EntityManager.TryGetBuffer(
+            //                ParkingLot12Entity,
+            //                false,
+            //                out DynamicBuffer<SubNet> osni1
+            //            )
+            //        )
+            //            osni1.Add(marker);
 
-                    EntityManager.AddComponentData(ParkingLot13Entity, solarPoweredData2);
-                    EntityManager.AddComponent<PowerPlantData>(ParkingLot13Entity);
-                    if (
-                        EntityManager.TryGetBuffer(
-                            ParkingLot13Entity,
-                            false,
-                            out DynamicBuffer<SubNet> osni2
-                        )
-                    )
-                        osni2.Add(marker);
+            //        EntityManager.AddComponentData(ParkingLot13Entity, solarPoweredData2);
+            //        EntityManager.AddComponent<PowerPlantData>(ParkingLot13Entity);
+            //        if (
+            //            EntityManager.TryGetBuffer(
+            //                ParkingLot13Entity,
+            //                false,
+            //                out DynamicBuffer<SubNet> osni2
+            //            )
+            //        )
+            //            osni2.Add(marker);
 
-                    changeCount++;
-                    isSolarParkingSet = true;
-                    changed = true;
-                }
+            //        changeCount++;
+            //        isSolarParkingSet = true;
+            //        changed = true;
+            //    }
 
-                if (changed)
-                {
-                    LogHelper.SendLog("ParkingLot12 & ParkingLot13 fix completed", LogLevel.DEVD);
-                    SetState();
-                }
-            }
+            //    if (changed)
+            //    {
+            //        LogHelper.SendLog("ParkingLot12 & ParkingLot13 fix completed", LogLevel.DEVD);
+            //        SetState();
+            //    }
+            //}
         }
 
         public void FixRSClinic(bool active = true)
@@ -1294,6 +1326,155 @@ namespace PrefabAssetFixes.Systems
                 changeCount += active ? 1 : -1;
                 isFRCityHallSet = active;
                 SetState();
+            }
+        }
+
+        public void UpdateIndustrialWorker(bool active = true, int value = 1)
+        {
+            if (!isIndustrialCompanyWorkerUpdated && !active)
+                return;
+
+            if (value == 1)
+                active = false;
+            if (!active)
+                value = 1;
+
+            int multiplier1 = active ? value : 1;
+
+            int multiplier2 = active ? (int)math.ceil(multiplier1 / 5) : 1;
+
+            PrefabSystem _prefabSystem = WorldHelper.PrefabSystem;
+            EntityQuery query = SystemAPI.QueryBuilder().WithAll<IndustrialProcessData>().Build();
+            NativeArray<Entity> entities = query.ToEntityArray(Allocator.Temp);
+
+            string text = active ? "Boosting" : "Resetting";
+            LogHelper.SendLog($"{text} {entities.Length} entities...", LogLevel.DEVD);
+
+            for (int i = 0; i < entities.Length; i++)
+            {
+                Entity entity = entities[i];
+                IndustrialProcessData processData = SystemAPI.GetComponent<IndustrialProcessData>(
+                    entity
+                );
+
+                if (!_prefabSystem.TryGetPrefab(entity, out PrefabBase prefab))
+                    continue;
+
+                float existing = processData.m_MaxWorkersPerCell;
+
+                if (existing == 0)
+                    continue;
+
+                if (prefab.TryGet(out Game.Prefabs.ProcessingCompany pc))
+                {
+                    if (
+                        processData.m_MaxWorkersPerCell
+                        == pc.process.m_MaxWorkersPerCell * multiplier1
+                    )
+                        continue;
+
+                    processData.m_MaxWorkersPerCell = pc.process.m_MaxWorkersPerCell * multiplier1;
+                    processData.m_Output.m_Amount = pc.process.m_Output.m_Amount * multiplier2;
+                }
+
+                LogHelper.SendLog(
+                    $"Boosted {prefab.name} from {existing} to {processData.m_MaxWorkersPerCell} workers per cell.",
+                    LogLevel.DEVD
+                );
+                SystemAPI.SetComponent(entity, processData);
+            }
+            LogHelper.SendLog("Done boosting workers!", LogLevel.DEVD);
+            isIndustrialCompanyWorkerUpdated = true;
+            SetState();
+        }
+
+        public void FixSaveFromSolar()
+        {
+            if (
+                !(
+                    PrefabHelper.TryGetEntity(
+                        new PrefabID(nameof(BuildingPrefab), "ParkingLot12"),
+                        out Entity ParkingLot12Entity
+                    )
+                    && PrefabHelper.TryGetEntity(
+                        new PrefabID(nameof(BuildingPrefab), "ParkingLot13"),
+                        out Entity ParkingLot13Entity
+                    )
+                    && PrefabHelper.TryGetEntity(
+                        new PrefabID("PowerLinePrefab", "Low-voltage Marker"),
+                        out Entity powerLineEntity
+                    )
+                )
+            )
+                return;
+
+            var query = SystemAPI
+                .QueryBuilder()
+                .WithAll<Game.Net.SubNet, Game.Buildings.ParkingFacility>()
+                .Build();
+            var entities = query.ToEntityArray(Allocator.Temp);
+            LogHelper.SendLog($"Found {entities.Length} entities.");
+            int processed = 0;
+            foreach (var item in entities)
+            {
+                if (PrefabHelper.TryFindPrefabRef(item, out Entity PrefabRef))
+                {
+                    if (PrefabRef != ParkingLot12Entity && PrefabRef != ParkingLot13Entity)
+                        continue;
+                    if (
+                        EntityManager.TryGetBuffer(
+                            item,
+                            false,
+                            out DynamicBuffer<Game.Net.SubNet> osni1
+                        )
+                    )
+                    {
+                        bool doneEntity = false;
+                        for (int i = osni1.Length - 1; i >= 0; i--)
+                        {
+                            if (
+                                PrefabHelper.TryFindPrefabRef(osni1[i].m_SubNet, out Entity NetRef)
+                                && (NetRef == powerLineEntity)
+                            )
+                            {
+                                //osni1.RemoveAt(i);
+                                LogHelper.SendLog("Removed power line from a parking lot sub-net.");
+                                processed++;
+                                doneEntity = true;
+                            }
+
+                            if (doneEntity)
+                            {
+                                if (
+                                    EntityManager.TryGetComponent(
+                                        item,
+                                        out Game.Buildings.Building b
+                                    )
+                                )
+                                {
+                                    EntityManager.AddComponent<Deleted>(b.m_RoadEdge);
+                                    //EntityManager.AddComponent<Updated>(item);
+                                    //EntityManager.AddComponent<Highlighted>(item);
+                                }
+                                //osni1 = new();
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (processed > 0)
+            {
+                LogHelper.SendLog(LocaleHelper.Translate($"{Mod.Id}.ReloadSave"), LogLevel.Error);
+
+                GameManager.instance.userInterface.appBindings.ShowMessageDialog(
+                    new MessageDialog(Mod.Name, $"{Mod.Id}.ReloadSave", $"Common.OK"),
+                    x =>
+                    {
+                        //WorldHelper.GetSystem<GameScreenUISystem>().activeScreen =
+                        //    GameScreenUISystem.GameScreen.SaveGame;
+                    }
+                );
             }
         }
     }

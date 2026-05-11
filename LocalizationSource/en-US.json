@@ -1,6 +1,8 @@
 {
   "PrefabAssetFixes.StarQ_OptionGroup.VisualGroup": "Visual Fixes",
   "PrefabAssetFixes.StarQ_OptionGroup.FunctionalGroup": "Functional Fixes",
+  "PrefabAssetFixes.StarQ_Option.IndustrialCompanyWorker.Label": "Industrial Company Worker Multiplier",
+  "PrefabAssetFixes.StarQ_Option.IndustrialCompanyWorker.Description": "Boost the default max employee per tile for every industrial and office companies. Also increases the resource production proportionally to avoid bankruptcy. (Default 1x)",
   "PrefabAssetFixes.StarQ_Option.Prison.Label": "Prison's Van Count",
   "PrefabAssetFixes.StarQ_Option.Prison.Description": "Change the vanilla Prison's Prison Van capacity from 10 to 20 to fill up all the service vehicle parkings.",
   "PrefabAssetFixes.StarQ_Option.Hospital.Label": "Hospital Service Parking",
@@ -10,7 +12,7 @@
   "PrefabAssetFixes.StarQ_Option.HoveringPoles.Label": "Hovering Poles & Signs",
   "PrefabAssetFixes.StarQ_Option.HoveringPoles.Description": "Fix hovering poles and signs present in China and US South West Region Packs.",
   "PrefabAssetFixes.StarQ_Option.SolarParking.Label": "Solar Panel Parkings' Electricity Production",
-  "PrefabAssetFixes.StarQ_Option.SolarParking.Description": "Add solar power production to the parking lots with.",
+  "PrefabAssetFixes.StarQ_Option.SolarParking.Description": "Add solar power production to the parking lots with solar panels.",
   "PrefabAssetFixes.StarQ_Option.RSClinic.Label": "Modern Medical Clinic Storage",
   "PrefabAssetFixes.StarQ_Option.RSClinic.Description": "Change the Modern Medical Clinic Storage capacity from 0.1t to 1t.",
   "PrefabAssetFixes.StarQ_Option.LHTBusStation02.Label": "Small Bus Station for LHT",
@@ -29,9 +31,14 @@
   "PrefabAssetFixes.StarQ_Option.FRCiltyHall.Description": "Add Unlock on Build same as the vanilla City Hall.",
   "PrefabAssetFixes.StarQ_Option.AdditionalTransformers.Label": "Additional Transformer Upgrades",
   "PrefabAssetFixes.StarQ_Option.AdditionalTransformers.Description": "Add additional transformers to Nuclear Power Plant and Hydroelectric Power Plant.",
+  "PrefabAssetFixes.StarQ_Option.ModState.Label": "Mod State",
+  "PrefabAssetFixes.StarQ_Option.ModState.Description": "Current state of the mod.",
   "PrefabAssetFixes.Mod.State.Ready": "Ready",
   "PrefabAssetFixes.Mod.State.SetNone": "No changes saved",
   "PrefabAssetFixes.Mod.State.SetSome": "Some changes saved",
   "PrefabAssetFixes.Mod.State.SetAll": "All changes saved",
-  "PrefabAssetFixes.Mod.State.Incompatible": "Game version {PrefabAssetFixes.Replacement.CurrentVersion} is not compatible for mod version {PrefabAssetFixes.Replacement.ModVersion}, only for {PrefabAssetFixes.Replacement.FixedVersion}."
+  "PrefabAssetFixes.Mod.State.Incompatible": "Game version {PrefabAssetFixes.Replacement.CurrentVersion} is not compatible for mod version {PrefabAssetFixes.Replacement.ModVersion}, only for {PrefabAssetFixes.Replacement.FixedVersion}.",
+
+  "PrefabAssetFixes.ReloadSave": "Save fix from solar parking lots found. Please load the game with Safe Mode, and at least Prefab Asset Fixes mod enabled. After loading to the save start the simulation. If your save crashes then you have a different issue as well. Find solar parking with no roads connected, delete the buildings. Then load the save and save again.",
+  "PrefabAssetFixes.OpenSaveGameScreen": "Open Save Game Screen"
 }

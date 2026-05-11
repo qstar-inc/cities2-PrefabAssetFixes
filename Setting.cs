@@ -30,6 +30,27 @@ namespace PrefabAssetFixes
             World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<AssetFixSystem>();
 
         [Exclude]
+        private int _indWorker;
+
+        [SettingsUISection(GeneralTab, FunctionalGroup)]
+        [SettingsUISlider(
+            min = 1,
+            max = 20,
+            step = 1,
+            scaleDragVolume = false,
+            updateOnDragEnd = true
+        )]
+        public int IndustrialCompanyWorker
+        {
+            get => _indWorker;
+            set
+            {
+                _indWorker = value;
+                assetFixSystem.UpdateIndustrialWorker(true, value);
+            }
+        }
+
+        [Exclude]
         private bool _prison;
 
         [SettingsUISection(GeneralTab, VisualGroup)]
@@ -88,8 +109,13 @@ namespace PrefabAssetFixes
         }
 
         [Exclude]
+        [SettingsUIHidden]
+        private readonly bool disableSolar = false;
+
+        [Exclude]
         private bool _solarParking;
 
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(disableSolar))]
         [SettingsUISection(GeneralTab, FunctionalGroup)]
         public bool SolarParking
         {
@@ -258,6 +284,7 @@ namespace PrefabAssetFixes
             NLLowHousehold = true;
             AdditionalTransformers = true;
             FRCiltyHall = true;
+            IndustrialCompanyWorker = 20;
         }
 
         [Exclude]

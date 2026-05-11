@@ -1,0 +1,2 @@
+- Disable 'Solar Panel Parkings' Electricity Production' temporarily, as it has been reported to break saves.
+- Add option to boost industrial company employee per tiles.

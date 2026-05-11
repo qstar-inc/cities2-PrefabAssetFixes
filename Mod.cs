@@ -1,14 +1,11 @@
 using System.Collections.Generic;
 using System.Reflection;
 using Colossal.IO.AssetDatabase;
-using Colossal.Localization;
 using Colossal.Logging;
 using Game;
 using Game.Modding;
-using Game.SceneFlow;
 using PrefabAssetFixes.Systems;
 using StarQ.Shared.Extensions;
-using Unity.Entities;
 
 namespace PrefabAssetFixes
 {
@@ -42,6 +39,10 @@ namespace PrefabAssetFixes
             AssetDatabase.global.LoadSettings(Id, m_Setting, new Setting(this));
 
             AssetFixSystem.systemReady = true;
+
+            updateSystem.UpdateBefore<AssetFixSystem, Game.Serialization.ElectricityGraphSystem>(
+                SystemUpdatePhase.Deserialize
+            );
             modState = ModState.Ready;
             UpdateState();
 
