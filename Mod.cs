@@ -25,7 +25,8 @@ namespace PrefabAssetFixes
         public static Setting m_Setting;
 
         public static string State = "";
-        public static string supportedGameVersion = "1.5.5f1";
+
+        //public static string supportedGameVersion = "1.5.5f1";
         public static ModState modState = ModState.None;
 
         public void OnLoad(UpdateSystem updateSystem)
@@ -70,9 +71,9 @@ namespace PrefabAssetFixes
         {
             return new()
             {
-                { "CurrentVersion", Game.Version.current.shortVersion },
-                { "ModVersion", Version },
-                { "FixedVersion", supportedGameVersion },
+                //{ "CurrentVersion", Game.Version.current.shortVersion },
+                //{ "ModVersion", Version },
+                //{ "FixedVersion", supportedGameVersion },
             };
         }
 
@@ -99,9 +100,9 @@ namespace PrefabAssetFixes
                 case ModState.Ready:
                     state = $"Ready";
                     break;
-                case ModState.Incompatible:
-                    state = $"Incompatible";
-                    break;
+                //case ModState.Incompatible:
+                //    state = $"Incompatible";
+                //    break;
                 case ModState.SetNone:
                     state = $"SetNone";
                     break;
@@ -114,7 +115,7 @@ namespace PrefabAssetFixes
                 default:
                     break;
             }
-            string stateText = LocaleHelper.Translate($"{Id}.Mod.State.{state}");
+            string stateText = LocaleHelper.Translate($"{Id}.State.{state}");
 
             if (ms == ModState.SetNone || ms == ModState.SetSome || ms == ModState.SetAll)
             {

@@ -110,7 +110,7 @@ namespace PrefabAssetFixes
 
         [Exclude]
         [SettingsUIHidden]
-        private readonly bool disableSolar = false;
+        private bool disableSolar = false;
 
         [Exclude]
         private bool _solarParking;
@@ -285,6 +285,7 @@ namespace PrefabAssetFixes
             AdditionalTransformers = true;
             FRCiltyHall = true;
             IndustrialCompanyWorker = 1;
+            disableSolar = false;
         }
 
         [Exclude]

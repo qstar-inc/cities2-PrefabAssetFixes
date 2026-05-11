@@ -1,6 +1,8 @@
 {
   "PrefabAssetFixes.StarQ_OptionGroup.VisualGroup": "視覺整理",
   "PrefabAssetFixes.StarQ_OptionGroup.FunctionalGroup": "功能性整理",
+  "PrefabAssetFixes.StarQ_Option.IndustrialCompanyWorker.Label": "Industrial Company Worker Multiplier",
+  "PrefabAssetFixes.StarQ_Option.IndustrialCompanyWorker.Description": "Boost the default max employee per tile for every industrial and office companies. Also increases the resource production proportionally to avoid bankruptcy. (Default 1x)",
   "PrefabAssetFixes.StarQ_Option.Prison.Label": "囚車總數",
   "PrefabAssetFixes.StarQ_Option.Prison.Description": "Change the vanilla Prison's Prison Van capacity from 10 to 20 to fill up all the service vehicle parkings.",
   "PrefabAssetFixes.StarQ_Option.Hospital.Label": "醫院泊車服務",
@@ -10,7 +12,7 @@
   "PrefabAssetFixes.StarQ_Option.HoveringPoles.Label": "懸空桿和標誌",
   "PrefabAssetFixes.StarQ_Option.HoveringPoles.Description": "Fix hovering poles and signs present in China and US South West Region Packs.",
   "PrefabAssetFixes.StarQ_Option.SolarParking.Label": "太陽能板泊車位的電力產量",
-  "PrefabAssetFixes.StarQ_Option.SolarParking.Description": "Add solar power production to the parking lots with.",
+  "PrefabAssetFixes.StarQ_Option.SolarParking.Description": "Add solar power production to the parking lots with solar panels.",
   "PrefabAssetFixes.StarQ_Option.RSClinic.Label": "Modern Medical Clinic Storage",
   "PrefabAssetFixes.StarQ_Option.RSClinic.Description": "Change the Modern Medical Clinic Storage capacity from 0.1t to 1t.",
   "PrefabAssetFixes.StarQ_Option.LHTBusStation02.Label": "Small Bus Station for LHT",
@@ -29,9 +31,12 @@
   "PrefabAssetFixes.StarQ_Option.FRCiltyHall.Description": "Add Unlock on Build same as the vanilla City Hall.",
   "PrefabAssetFixes.StarQ_Option.AdditionalTransformers.Label": "Additional Transformer Upgrades",
   "PrefabAssetFixes.StarQ_Option.AdditionalTransformers.Description": "Add additional transformers to Nuclear Power Plant and Hydroelectric Power Plant.",
-  "PrefabAssetFixes.Mod.State.Ready": "Ready",
-  "PrefabAssetFixes.Mod.State.SetNone": "No changes saved",
-  "PrefabAssetFixes.Mod.State.SetSome": "Some changes saved",
-  "PrefabAssetFixes.Mod.State.SetAll": "All changes saved",
-  "PrefabAssetFixes.Mod.State.Incompatible": "Game version {PrefabAssetFixes.Replacement.CurrentVersion} is not compatible for mod version {PrefabAssetFixes.Replacement.ModVersion}, only for {PrefabAssetFixes.Replacement.FixedVersion}."
+  "PrefabAssetFixes.StarQ_Option.ModState.Label": "Mod State",
+  "PrefabAssetFixes.StarQ_Option.ModState.Description": "Current state of the mod.",
+  "PrefabAssetFixes.State.Ready": "Ready",
+  "PrefabAssetFixes.State.SetNone": "No changes saved",
+  "PrefabAssetFixes.State.SetSome": "Some changes saved",
+  "PrefabAssetFixes.State.SetAll": "All changes saved",
+  "PrefabAssetFixes.State.Incompatible": "Game version {PrefabAssetFixes.Replacement.CurrentVersion} is not compatible for mod version {PrefabAssetFixes.Replacement.ModVersion}, only for {PrefabAssetFixes.Replacement.FixedVersion}.",
+  "PrefabAssetFixes.ReloadSave": "Load your game in Safe Mode if it crashes, or continue in normal mode if it runs fine.\nMake sure at least the Prefab Asset Fixes mod is enabled.\nOnce your save is loaded, locate any solar parking lots that have no roads connected and delete those buildings.\nOptional: You can re-add roads and re-place the parking lots if you want.\nSave your game and continue playing with this updated save.\nNote: If your game crashes when starting the simulation, that points to a different issue not related to the this mod..."
 }

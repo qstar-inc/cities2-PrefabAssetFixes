@@ -33,12 +33,10 @@
   "PrefabAssetFixes.StarQ_Option.AdditionalTransformers.Description": "Add additional transformers to Nuclear Power Plant and Hydroelectric Power Plant.",
   "PrefabAssetFixes.StarQ_Option.ModState.Label": "Mod State",
   "PrefabAssetFixes.StarQ_Option.ModState.Description": "Current state of the mod.",
-  "PrefabAssetFixes.Mod.State.Ready": "Ready",
-  "PrefabAssetFixes.Mod.State.SetNone": "No changes saved",
-  "PrefabAssetFixes.Mod.State.SetSome": "Some changes saved",
-  "PrefabAssetFixes.Mod.State.SetAll": "All changes saved",
-  "PrefabAssetFixes.Mod.State.Incompatible": "Game version {PrefabAssetFixes.Replacement.CurrentVersion} is not compatible for mod version {PrefabAssetFixes.Replacement.ModVersion}, only for {PrefabAssetFixes.Replacement.FixedVersion}.",
-
-  "PrefabAssetFixes.ReloadSave": "Save fix from solar parking lots found. Please load the game with Safe Mode, and at least Prefab Asset Fixes mod enabled. After loading to the save start the simulation. If your save crashes then you have a different issue as well. Find solar parking with no roads connected, delete the buildings. Then load the save and save again.",
-  "PrefabAssetFixes.OpenSaveGameScreen": "Open Save Game Screen"
+  "PrefabAssetFixes.State.Ready": "Ready",
+  "PrefabAssetFixes.State.SetNone": "No changes saved",
+  "PrefabAssetFixes.State.SetSome": "Some changes saved",
+  "PrefabAssetFixes.State.SetAll": "All changes saved",
+  "PrefabAssetFixes.State.Incompatible": "Game version {PrefabAssetFixes.Replacement.CurrentVersion} is not compatible for mod version {PrefabAssetFixes.Replacement.ModVersion}, only for {PrefabAssetFixes.Replacement.FixedVersion}.",
+  "PrefabAssetFixes.ReloadSave": "Load your game in Safe Mode if it crashes, or continue in normal mode if it runs fine.\nMake sure at least the Prefab Asset Fixes mod is enabled.\nOnce your save is loaded, locate any solar parking lots that have no roads connected and delete those buildings.\nOptional: You can re-add roads and re-place the parking lots if you want.\nSave your game and continue playing with this updated save.\nNote: If your game crashes when starting the simulation, that points to a different issue not related to the this mod..."
 }

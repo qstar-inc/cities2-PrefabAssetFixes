@@ -1,1 +1,2 @@
-- Set industrial company employee per tiles default to 1x (vanilla value).
+- Updated description of the Solar Fix popups.
+- Added missing translations. Contribute more translations with the Crowdin project linked.

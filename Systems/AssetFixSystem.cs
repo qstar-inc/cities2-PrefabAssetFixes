@@ -1,31 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using Colossal;
 using Colossal.Entities;
-using Colossal.IO.AssetDatabase;
-using Colossal.Reflection;
 using Colossal.Serialization.Entities;
-using Colossal.UI;
 using Game;
-using Game.Assets;
 using Game.Common;
 using Game.Companies;
 using Game.Prefabs;
 using Game.SceneFlow;
-using Game.Settings;
-using Game.Tools;
 using Game.UI;
-using Game.UI.InGame;
-using Game.UI.Localization;
-using Game.UI.Menu;
 using StarQ.Shared.Extensions;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace PrefabAssetFixes.Systems
 {
@@ -33,7 +19,8 @@ namespace PrefabAssetFixes.Systems
     {
         None,
         Ready,
-        Incompatible,
+
+        //Incompatible,
         SetNone,
         SetSome,
         SetAll,
@@ -57,7 +44,8 @@ namespace PrefabAssetFixes.Systems
         private bool isHospitalSet = false;
         private bool isPolesSet = false;
         private bool isUSSWHospitalSet = false;
-        private bool isSolarParkingSet = false;
+
+        //private bool isSolarParkingSet = false;
         private bool isRSClinicSet = false;
         private bool isLHTBusStation02Set = false;
         private bool isLHTTaxiDepot01Set = false;
@@ -220,6 +208,8 @@ namespace PrefabAssetFixes.Systems
 
         protected override void OnGameLoadingComplete(Purpose purpose, GameMode mode)
         {
+            if (Mod.m_Setting.IndustrialCompanyWorker == 20)
+                Mod.m_Setting.IndustrialCompanyWorker = 1;
             Enabled = true;
             base.OnGameLoadingComplete(purpose, mode);
             if (firstPass)
